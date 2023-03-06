@@ -1,9 +1,17 @@
 #include <iostream>
-#include "example.h"
+#include "coin.h"
 
 int main()
 {
-    wacpp::Example example("world");
-    std::cout << example.greet() << std::endl;
+    auto coin = wacpp::make_double_headed_coin();
+    if (coin->flip())
+    {
+        std::cout << "It was heads!" << std::endl;
+    }
+    else
+    {
+        std::cout << "It was tails!" << std::endl;
+    }
+
     return 0;
 }

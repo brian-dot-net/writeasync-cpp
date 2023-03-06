@@ -6,7 +6,7 @@ set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg/scripts/buildsystems
 project ("writeasync-cpp")
 
 add_library(decorator-core
-    src/decorator/lib/example.cpp
+    "src/decorator/lib/coin.cpp"
 )
 
 target_compile_features(decorator-core PUBLIC cxx_std_20)
@@ -29,7 +29,7 @@ target_link_libraries(decorator-app
 find_package(GTest REQUIRED)
 
 add_executable(decorator-test
-    src/decorator/test/example_test.cpp
+    "src/decorator/test/coin_test.cpp"
 )
 
 target_compile_features(decorator-test PUBLIC cxx_std_20)
