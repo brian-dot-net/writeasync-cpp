@@ -11,4 +11,6 @@ public:
 
 std::unique_ptr<ICoin> make_double_headed_coin();
 
+std::unique_ptr<ICoin> make_fair_coin();
+
 }
