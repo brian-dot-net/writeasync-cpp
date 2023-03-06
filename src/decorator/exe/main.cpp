@@ -1,35 +1,43 @@
-#include <iostream>
 #include <string>
-#include "coin.h"
+#include <sstream>
+#include <iostream>
 
-void flip_one(wacpp::ICoin& coin)
+#include "coin.h"
+#include "trace.h"
+
+void flip_one(wacpp::ICoin& coin, wacpp::ITracer& tracer)
 {
     if (coin.flip())
     {
-        std::cout << "It was heads!" << std::endl;
+        tracer.trace("It was heads!");
     }
     else
     {
-        std::cout << "It was tails!" << std::endl;
+        tracer.trace("It was tails!");
     }
 }
 
-void flip_many(wacpp::ICoin& coin, const std::string& name)
+void flip_many(wacpp::ICoin& coin, wacpp::ITracer& tracer, const std::string& name)
 {
-    std::cout << "Flipping " << name << "..." << std::endl;
+    std::stringstream ss;
+    ss << "Flipping " << name << "...";
+    tracer.trace(ss.str());
+
     for (int i = 0; i < 10; ++i)
     {
-        flip_one(coin);
+        flip_one(coin, tracer);
     }
 }
 
 int main()
 {
-    auto coin1 = wacpp::make_double_headed_coin();
-    auto coin2 = wacpp::make_fair_coin();
+    auto tracer = wacpp::make_ostream_tracer(std::cout);
 
-    flip_many(*coin1, "TwoHeads");
-    flip_many(*coin2, "Fair");
+    auto coin1 = wacpp::make_double_headed_coin();
+    flip_many(*coin1, *tracer, "TwoHeads");
+
+    auto coin2 = wacpp::make_fair_coin();
+    flip_many(*coin2, *tracer, "Fair");
 
     return 0;
 }
