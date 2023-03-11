@@ -45,7 +45,7 @@ Decoration<CoinTrace, std::shared_ptr<ITracer>, std::string> with_tracer(std::sh
     return with_decoration<CoinTrace>(std::move(tracer), std::move(name));
 }
 
-std::unique_ptr<ICoin> CoinTrace::make_decorator(std::unique_ptr<ICoin> inner, std::shared_ptr<ITracer> tracer, std::string name)
+std::unique_ptr<ICoin> CoinTrace::make_decorator(std::unique_ptr<ICoin> inner, std::shared_ptr<ITracer> tracer, const std::string& name)
 {
     return std::make_unique<TracedCoin>(std::move(inner), std::move(tracer), name);
 }

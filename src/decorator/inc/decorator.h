@@ -16,7 +16,7 @@ struct Decoration
 template <typename D, typename ...Args>
 Decoration<D, Args...> with_decoration(Args... args)
 {
-    return { std::forward_as_tuple(args...) };
+    return { std::make_tuple(args...) };
 }
 
 template <typename C, typename D, typename ...Args>
