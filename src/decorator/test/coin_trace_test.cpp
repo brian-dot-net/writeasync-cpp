@@ -7,10 +7,9 @@ namespace wacpp::test
 
 TEST(coin_trace_test, traces_ctor_and_heads_flips)
 {
-    auto inner = make_double_headed_coin();
     std::stringstream ss;
     auto tracer = make_ostream_tracer(ss);
-    auto coin = make_traced_coin(std::move(inner), tracer, "HeadsCoin");
+    auto coin = make_double_headed_coin() * with_tracer(tracer, "HeadsCoin");
 
     ASSERT_TRUE(coin->flip());
     ASSERT_TRUE(coin->flip());
@@ -20,11 +19,9 @@ TEST(coin_trace_test, traces_ctor_and_heads_flips)
 
 TEST(coin_trace_test, traces_ctor_and_tails_flips)
 {
-    auto inner1 = make_double_headed_coin();
-    auto inner2 = make_inverted_coin(std::move(inner1));
     std::stringstream ss;
     auto tracer = make_ostream_tracer(ss);
-    auto coin = make_traced_coin(std::move(inner2), tracer, "TailsCoin");
+    auto coin = make_double_headed_coin() * with_inversion() * with_tracer(tracer, "TailsCoin");
 
     ASSERT_FALSE(coin->flip());
     ASSERT_FALSE(coin->flip());
