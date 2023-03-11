@@ -14,14 +14,14 @@ void flip_many(wacpp::ICoin& coin)
 
 int main()
 {
-    auto tracer = wacpp::make_ostream_tracer(std::cout);
+    using namespace wacpp;
 
-    auto inner1 = wacpp::make_double_headed_coin();
-    auto coin1 = wacpp::make_traced_coin(std::move(inner1), tracer, "TwoHeads");
+    auto tracer = make_ostream_tracer(std::cout);
+
+    auto coin1 = make_double_headed_coin() * with_tracer(tracer, "TwoHeads");
     flip_many(*coin1);
 
-    auto inner2 = wacpp::make_fair_coin();
-    auto coin2 = wacpp::make_traced_coin(std::move(inner2), tracer, "Fair");
+    auto coin2 = make_fair_coin() * with_tracer(tracer, "Fair");
     flip_many(*coin2);
 
     return 0;

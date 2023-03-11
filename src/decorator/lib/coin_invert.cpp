@@ -26,11 +26,6 @@ private:
 namespace wacpp
 {
 
-std::unique_ptr<ICoin> make_inverted_coin(std::unique_ptr<ICoin> inner)
-{
-    return std::make_unique<InvertedCoin>(std::move(inner));
-}
-
 Decoration<CoinInvert> with_inversion()
 {
     return with_decoration<CoinInvert>();
@@ -38,6 +33,7 @@ Decoration<CoinInvert> with_inversion()
 
 std::unique_ptr<ICoin> CoinInvert::make_decorator(std::unique_ptr<ICoin> inner)
 {
-    return make_inverted_coin(std::move(inner));
+    return std::make_unique<InvertedCoin>(std::move(inner));
 }
+
 }
