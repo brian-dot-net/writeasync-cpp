@@ -25,4 +25,10 @@ std::unique_ptr<C> operator*(std::unique_ptr<C> decorated, Decoration<D, Args...
     return std::apply(std::bind_front(&D::make_decorator, std::move(decorated)), decoration.args);
 }
 
+template <typename C, typename D, typename ...Args>
+std::shared_ptr<C> operator*(std::shared_ptr<C> decorated, Decoration<D, Args...>&& decoration)
+{
+    return std::apply(std::bind_front(&D::make_decorator, std::move(decorated)), decoration.args);
+}
+
 }

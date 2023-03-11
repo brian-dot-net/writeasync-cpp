@@ -10,6 +10,7 @@ add_library(decorator-core
     "src/decorator/lib/coin_invert.cpp"
     "src/decorator/lib/coin_trace.cpp"
     "src/decorator/lib/trace.cpp"
+    "src/decorator/lib/trace_header.cpp"
 )
 
 target_compile_features(decorator-core PUBLIC cxx_std_20)
@@ -35,6 +36,7 @@ add_executable(decorator-test
     "src/decorator/test/coin_test.cpp"
     "src/decorator/test/coin_trace_test.cpp"
     "src/decorator/test/trace_test.cpp"
+    "src/decorator/test/trace_header_test.cpp"
 )
 
 target_compile_features(decorator-test PUBLIC cxx_std_20)
