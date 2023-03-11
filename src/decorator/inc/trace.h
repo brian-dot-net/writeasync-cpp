@@ -1,3 +1,5 @@
+#pragma once
+
 #include <memory>
 #include <ostream>
 #include <string>
@@ -12,6 +14,6 @@ public:
     virtual void trace(const std::string& message) = 0;
 };
 
-std::unique_ptr<ITracer> make_ostream_tracer(std::ostream& out);
+std::shared_ptr<ITracer> make_ostream_tracer(std::ostream& out);
 
 }

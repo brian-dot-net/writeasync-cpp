@@ -7,6 +7,8 @@ project ("writeasync-cpp")
 
 add_library(decorator-core
     "src/decorator/lib/coin.cpp"
+    "src/decorator/lib/coin_invert.cpp"
+    "src/decorator/lib/coin_trace.cpp"
     "src/decorator/lib/trace.cpp"
 )
 
@@ -18,7 +20,7 @@ target_include_directories(decorator-core
 )
 
 add_executable(decorator-app
-    src/decorator/exe/main.cpp
+    "src/decorator/exe/main.cpp"
 )
 
 target_compile_features(decorator-app PUBLIC cxx_std_20)
@@ -31,6 +33,7 @@ find_package(GTest REQUIRED)
 
 add_executable(decorator-test
     "src/decorator/test/coin_test.cpp"
+    "src/decorator/test/coin_trace_test.cpp"
     "src/decorator/test/trace_test.cpp"
 )
 

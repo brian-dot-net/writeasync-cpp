@@ -25,9 +25,9 @@ private:
 namespace wacpp
 {
 
-std::unique_ptr<ITracer> make_ostream_tracer(std::ostream& out)
+std::shared_ptr<ITracer> make_ostream_tracer(std::ostream& out)
 {
-    return std::make_unique<OstreamTracer>(out);
+    return std::make_shared<OstreamTracer>(out);
 }
 
 }
