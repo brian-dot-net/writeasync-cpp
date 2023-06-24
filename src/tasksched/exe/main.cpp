@@ -7,6 +7,7 @@
 #include <comutil.h>
 #include <taskschd.h>
 
+#include <wil/com.h>
 #include <wil/resource.h>
 #include <wil/win32_helpers.h>
 
@@ -60,26 +61,18 @@ int main()
 
     //  ------------------------------------------------------
     //  Create an instance of the Task Service.
-    void* pServiceVoid{};
-    hr = CoCreateInstance(
-        CLSID_TaskScheduler,
-        nullptr,
-        CLSCTX_INPROC_SERVER,
-        IID_ITaskService,
-        &pServiceVoid);
-    if (FAILED(hr))
+    auto pService = wil::CoCreateInstanceNoThrow<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER);
+    if (!pService)
     {
-        printf("Failed to create an instance of ITaskService: %x", hr);
+        printf("Failed to create an instance of ITaskService");
         return 1;
     }
 
     //  Connect to the task service.
-    ITaskService* pService = static_cast<ITaskService*>(pServiceVoid);
     hr = pService->Connect({}, {}, {}, {});
     if (FAILED(hr))
     {
         printf("ITaskService::Connect failed: %x", hr);
-        pService->Release();
         return 1;
     }
 
@@ -91,7 +84,6 @@ int main()
     if (FAILED(hr))
     {
         printf("Cannot get Root folder pointer: %x", hr);
-        pService->Release();
         return 1;
     }
 
@@ -102,7 +94,6 @@ int main()
     ITaskDefinition* pTask{};
     hr = pService->NewTask(0, &pTask);
 
-    pService->Release();  // COM clean up.  Pointer is no longer used.
     if (FAILED(hr))
     {
         printf("Failed to CoCreate an instance of the TaskService class: %x", hr);
