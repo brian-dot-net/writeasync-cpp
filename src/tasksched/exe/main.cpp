@@ -221,10 +221,10 @@ int main()
 
     //  ------------------------------------------------------
     //  Add an action to the task. This task will execute notepad.exe.
-    IActionCollection* pActionCollection{};
+    wil::com_ptr_nothrow<IActionCollection> pActionCollection;
 
     //  Get the task action collection pointer.
-    hr = pTask->get_Actions(&pActionCollection);
+    hr = pTask->get_Actions(pActionCollection.put());
     if (FAILED(hr))
     {
         printf("\nCannot get Task collection pointer: %x", hr);
@@ -234,7 +234,6 @@ int main()
     //  Create the action, specifying that it is an executable action.
     IAction* pAction{};
     hr = pActionCollection->Create(TASK_ACTION_EXEC, &pAction);
-    pActionCollection->Release();
     if (FAILED(hr))
     {
         printf("\nCannot create the action: %x", hr);
