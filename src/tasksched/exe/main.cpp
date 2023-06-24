@@ -257,7 +257,7 @@ int main()
 
     //  ------------------------------------------------------
     //  Save the task in the root folder.
-    IRegisteredTask* pRegisteredTask{};
+    wil::com_ptr_nothrow<IRegisteredTask> pRegisteredTask;
     hr = pRootFolder->RegisterTaskDefinition(
         _bstr_t(wszTaskName),
         pTask.get(),
@@ -266,7 +266,7 @@ int main()
         {},
         TASK_LOGON_INTERACTIVE_TOKEN,
         _variant_t(L""),
-        &pRegisteredTask);
+        pRegisteredTask.put());
     if (FAILED(hr))
     {
         printf("\nError saving the Task : %x", hr);
@@ -274,8 +274,5 @@ int main()
     }
 
     printf("\n Success! Task successfully registered. ");
-
-    //  Clean up.
-    pRegisteredTask->Release();
     return 0;
 }
