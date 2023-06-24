@@ -11,8 +11,6 @@
 #include <wil/resource.h>
 #include <wil/win32_helpers.h>
 
-using unique_couninitialize_call = wil::unique_call<decltype(&::CoUninitialize), ::CoUninitialize>;
-
 int run()
 {
     // Print every log message to standard out.
@@ -27,17 +25,10 @@ int run()
 
     //  ------------------------------------------------------
     //  Initialize COM.
-    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    if (FAILED(hr))
-    {
-        printf("\nCoInitializeEx failed: %x", hr);
-        return 1;
-    }
-
-    unique_couninitialize_call cleanup;
+    auto cleanup = wil::CoInitializeEx(COINIT_MULTITHREADED);
 
     //  Set general COM security levels.
-    hr = CoInitializeSecurity(
+    HRESULT hr = CoInitializeSecurity(
         nullptr,
         -1,
         nullptr,
