@@ -79,8 +79,8 @@ int main()
     //  ------------------------------------------------------
     //  Get the pointer to the root task folder.  This folder will hold the
     //  new task that is registered.
-    ITaskFolder* pRootFolder{};
-    hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+    wil::com_ptr_nothrow<ITaskFolder> pRootFolder;
+    hr = pService->GetFolder(_bstr_t(L"\\"), pRootFolder.put());
     if (FAILED(hr))
     {
         printf("Cannot get Root folder pointer: %x", hr);
@@ -97,7 +97,6 @@ int main()
     if (FAILED(hr))
     {
         printf("Failed to CoCreate an instance of the TaskService class: %x", hr);
-        pRootFolder->Release();
         return 1;
     }
 
@@ -108,7 +107,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get identification pointer: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -118,7 +116,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put identification info: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -131,7 +128,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get principal pointer: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -142,7 +138,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put principal info: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -154,7 +149,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get settings pointer: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -165,7 +159,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put setting information: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -176,7 +169,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get idle setting information: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -186,7 +178,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put idle setting information: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -198,7 +189,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get trigger collection: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -210,7 +200,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot create trigger: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -222,7 +211,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nQueryInterface call failed for ITimeTrigger: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -248,7 +236,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot add start boundary to trigger: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -262,7 +249,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get Task collection pointer: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -274,7 +260,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot create the action: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -286,7 +271,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nQueryInterface call failed for IExecAction: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -298,7 +282,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put action path: %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -318,7 +301,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nError saving the Task : %x", hr);
-        pRootFolder->Release();
         pTask->Release();
         return 1;
     }
@@ -326,7 +308,6 @@ int main()
     printf("\n Success! Task successfully registered. ");
 
     //  Clean up.
-    pRootFolder->Release();
     pTask->Release();
     pRegisteredTask->Release();
     return 0;
