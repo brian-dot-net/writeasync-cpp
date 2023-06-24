@@ -7,6 +7,10 @@
 #include <comutil.h>
 #include <taskschd.h>
 
+#include <wil/resource.h>
+
+using unique_couninitialize_call = wil::unique_call<decltype(&::CoUninitialize), ::CoUninitialize>;
+
 int main()
 {
     //  ------------------------------------------------------
@@ -17,6 +21,8 @@ int main()
         printf("\nCoInitializeEx failed: %x", hr);
         return 1;
     }
+
+    unique_couninitialize_call cleanup;
 
     //  Set general COM security levels.
     hr = CoInitializeSecurity(
@@ -33,7 +39,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCoInitializeSecurity failed: %x", hr);
-        CoUninitialize();
         return 1;
     }
 
@@ -57,7 +62,6 @@ int main()
     if (wstrExecutablePath.empty())
     {
         printf("Failed to get environment variable");
-        CoUninitialize();
         return 1;
     }
 
@@ -75,7 +79,6 @@ int main()
     if (FAILED(hr))
     {
         printf("Failed to create an instance of ITaskService: %x", hr);
-        CoUninitialize();
         return 1;
     }
 
@@ -86,7 +89,6 @@ int main()
     {
         printf("ITaskService::Connect failed: %x", hr);
         pService->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -99,7 +101,6 @@ int main()
     {
         printf("Cannot get Root folder pointer: %x", hr);
         pService->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -115,7 +116,6 @@ int main()
     {
         printf("Failed to CoCreate an instance of the TaskService class: %x", hr);
         pRootFolder->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -128,7 +128,6 @@ int main()
         printf("\nCannot get identification pointer: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -139,7 +138,6 @@ int main()
         printf("\nCannot put identification info: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -153,7 +151,6 @@ int main()
         printf("\nCannot get principal pointer: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -165,7 +162,6 @@ int main()
         printf("\nCannot put principal info: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -178,7 +174,6 @@ int main()
         printf("\nCannot get settings pointer: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -190,7 +185,6 @@ int main()
         printf("\nCannot put setting information: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -202,7 +196,6 @@ int main()
         printf("\nCannot get idle setting information: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -213,7 +206,6 @@ int main()
         printf("\nCannot put idle setting information: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -226,7 +218,6 @@ int main()
         printf("\nCannot get trigger collection: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -239,7 +230,6 @@ int main()
         printf("\nCannot create trigger: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -252,7 +242,6 @@ int main()
         printf("\nQueryInterface call failed for ITimeTrigger: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -279,7 +268,6 @@ int main()
         printf("\nCannot add start boundary to trigger: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -294,7 +282,6 @@ int main()
         printf("\nCannot get Task collection pointer: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -307,7 +294,6 @@ int main()
         printf("\nCannot create the action: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -320,7 +306,6 @@ int main()
         printf("\nQueryInterface call failed for IExecAction: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -333,7 +318,6 @@ int main()
         printf("\nCannot put action path: %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -354,7 +338,6 @@ int main()
         printf("\nError saving the Task : %x", hr);
         pRootFolder->Release();
         pTask->Release();
-        CoUninitialize();
         return 1;
     }
 
@@ -364,6 +347,5 @@ int main()
     pRootFolder->Release();
     pTask->Release();
     pRegisteredTask->Release();
-    CoUninitialize();
     return 0;
 }

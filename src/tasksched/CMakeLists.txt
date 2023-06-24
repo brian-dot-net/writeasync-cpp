@@ -9,6 +9,8 @@ target_include_directories(tasksched-core
         ${CMAKE_CURRENT_SOURCE_DIR}/inc
 )
 
+find_package(WIL REQUIRED)
+
 add_executable(tasksched-app
     "exe/main.cpp"
 )
@@ -19,6 +21,7 @@ target_link_libraries(tasksched-app
     tasksched-core
     taskschd.lib
     comsupp.lib
+    WIL::WIL
 )
 
 find_package(GTest REQUIRED)
