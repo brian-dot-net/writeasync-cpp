@@ -15,6 +15,16 @@ using unique_couninitialize_call = wil::unique_call<decltype(&::CoUninitialize),
 
 int main()
 {
+    // Print every log message to standard out.
+    wil::SetResultLoggingCallback([](wil::FailureInfo const& failure) noexcept {
+        constexpr std::size_t sizeOfLogMessageWithNul = 2048;
+        wchar_t logMessage[sizeOfLogMessageWithNul];
+        if (SUCCEEDED(wil::GetFailureLogString(logMessage, sizeOfLogMessageWithNul, failure)))
+        {
+            std::fputws(logMessage, stdout);
+        }
+    });
+
     //  ------------------------------------------------------
     //  Initialize COM.
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
