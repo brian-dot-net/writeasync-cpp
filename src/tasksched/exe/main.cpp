@@ -120,8 +120,8 @@ int main()
     //  ------------------------------------------------------
     //  Create the principal for the task - these credentials
     //  are overwritten with the credentials passed to RegisterTaskDefinition
-    IPrincipal* pPrincipal{};
-    hr = pTask->get_Principal(&pPrincipal);
+    wil::com_ptr_nothrow<IPrincipal> pPrincipal;
+    hr = pTask->get_Principal(pPrincipal.put());
     if (FAILED(hr))
     {
         printf("\nCannot get principal pointer: %x", hr);
@@ -130,7 +130,6 @@ int main()
 
     //  Set up principal logon type to interactive logon
     hr = pPrincipal->put_LogonType(TASK_LOGON_INTERACTIVE_TOKEN);
-    pPrincipal->Release();
     if (FAILED(hr))
     {
         printf("\nCannot put principal info: %x", hr);
