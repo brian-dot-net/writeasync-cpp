@@ -181,21 +181,18 @@ int main()
     }
 
     //  Add the time trigger to the task.
-    ITrigger* pTrigger{};
-    hr = pTriggerCollection->Create(TASK_TRIGGER_TIME, &pTrigger);
+    wil::com_ptr_nothrow<ITrigger> pTrigger;
+    hr = pTriggerCollection->Create(TASK_TRIGGER_TIME, pTrigger.put());
     if (FAILED(hr))
     {
         printf("\nCannot create trigger: %x", hr);
         return 1;
     }
 
-    ITimeTrigger* pTimeTrigger{};
-    hr = pTrigger->QueryInterface(
-        IID_ITimeTrigger, (void**)&pTimeTrigger);
-    pTrigger->Release();
-    if (FAILED(hr))
+    auto pTimeTrigger = pTrigger.try_query<ITimeTrigger>();
+    if (!pTimeTrigger)
     {
-        printf("\nQueryInterface call failed for ITimeTrigger: %x", hr);
+        printf("\nQueryInterface call failed for ITimeTrigger");
         return 1;
     }
 
@@ -216,7 +213,6 @@ int main()
     //  For example, the start boundary below
     //  is January 1st 2005 at 12:05
     hr = pTimeTrigger->put_StartBoundary(_bstr_t(L"2005-01-01T12:05:00"));
-    pTimeTrigger->Release();
     if (FAILED(hr))
     {
         printf("\nCannot add start boundary to trigger: %x", hr);
