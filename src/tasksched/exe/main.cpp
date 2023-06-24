@@ -13,7 +13,7 @@
 
 using unique_couninitialize_call = wil::unique_call<decltype(&::CoUninitialize), ::CoUninitialize>;
 
-int main()
+int run()
 {
     // Print every log message to standard out.
     wil::SetResultLoggingCallback([](wil::FailureInfo const& failure) noexcept {
@@ -199,13 +199,7 @@ int main()
         return 1;
     }
 
-    auto pTimeTrigger = pTrigger.try_query<ITimeTrigger>();
-    if (!pTimeTrigger)
-    {
-        printf("\nQueryInterface call failed for ITimeTrigger");
-        return 1;
-    }
-
+    auto pTimeTrigger = pTrigger.query<ITimeTrigger>();
     hr = pTimeTrigger->put_Id(_bstr_t(L"Trigger1"));
     if (FAILED(hr))
     {
@@ -250,12 +244,7 @@ int main()
         return 1;
     }
 
-    auto pExecAction = pAction.try_query<IExecAction>();
-    if (!pExecAction)
-    {
-        printf("\nQueryInterface call failed for IExecAction");
-        return 1;
-    }
+    auto pExecAction = pAction.query<IExecAction>();
 
     //  Set the path of the executable to notepad.exe.
     hr = pExecAction->put_Path(_bstr_t(wstrExecutablePath.c_str()));
@@ -286,3 +275,10 @@ int main()
     printf("\n Success! Task successfully registered. ");
     return 0;
 }
+
+int main()
+try
+{
+    return run();
+}
+CATCH_RETURN()
