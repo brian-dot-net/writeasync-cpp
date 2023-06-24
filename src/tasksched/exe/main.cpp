@@ -91,8 +91,8 @@ int main()
     pRootFolder->DeleteTask(_bstr_t(wszTaskName), 0);
 
     //  Create the task definition object to create the task.
-    ITaskDefinition* pTask{};
-    hr = pService->NewTask(0, &pTask);
+    wil::com_ptr_nothrow<ITaskDefinition> pTask;
+    hr = pService->NewTask(0, pTask.put());
 
     if (FAILED(hr))
     {
@@ -107,7 +107,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get identification pointer: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -116,7 +115,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put identification info: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -128,7 +126,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get principal pointer: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -138,7 +135,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put principal info: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -149,7 +145,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get settings pointer: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -159,7 +154,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put setting information: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -169,7 +163,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get idle setting information: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -178,7 +171,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put idle setting information: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -189,7 +181,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get trigger collection: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -200,7 +191,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot create trigger: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -211,7 +201,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nQueryInterface call failed for ITimeTrigger: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -236,7 +225,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot add start boundary to trigger: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -249,7 +237,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot get Task collection pointer: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -260,7 +247,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot create the action: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -271,7 +257,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nQueryInterface call failed for IExecAction: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -282,7 +267,6 @@ int main()
     if (FAILED(hr))
     {
         printf("\nCannot put action path: %x", hr);
-        pTask->Release();
         return 1;
     }
 
@@ -291,7 +275,7 @@ int main()
     IRegisteredTask* pRegisteredTask{};
     hr = pRootFolder->RegisterTaskDefinition(
         _bstr_t(wszTaskName),
-        pTask,
+        pTask.get(),
         TASK_CREATE_OR_UPDATE,
         {},
         {},
@@ -301,14 +285,12 @@ int main()
     if (FAILED(hr))
     {
         printf("\nError saving the Task : %x", hr);
-        pTask->Release();
         return 1;
     }
 
     printf("\n Success! Task successfully registered. ");
 
     //  Clean up.
-    pTask->Release();
     pRegisteredTask->Release();
     return 0;
 }
