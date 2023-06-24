@@ -102,8 +102,8 @@ int main()
 
     //  ------------------------------------------------------
     //  Get the registration info for setting the identification.
-    IRegistrationInfo* pRegInfo{};
-    hr = pTask->get_RegistrationInfo(&pRegInfo);
+    wil::com_ptr_nothrow<IRegistrationInfo> pRegInfo;
+    hr = pTask->get_RegistrationInfo(pRegInfo.put());
     if (FAILED(hr))
     {
         printf("\nCannot get identification pointer: %x", hr);
@@ -111,7 +111,6 @@ int main()
     }
 
     hr = pRegInfo->put_Author(_bstr_t(L"Author Name"));
-    pRegInfo->Release();
     if (FAILED(hr))
     {
         printf("\nCannot put identification info: %x", hr);
