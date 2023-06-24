@@ -172,8 +172,8 @@ int main()
 
     //  ------------------------------------------------------
     //  Get the trigger collection to insert the time trigger.
-    ITriggerCollection* pTriggerCollection{};
-    hr = pTask->get_Triggers(&pTriggerCollection);
+    wil::com_ptr_nothrow<ITriggerCollection> pTriggerCollection;
+    hr = pTask->get_Triggers(pTriggerCollection.put());
     if (FAILED(hr))
     {
         printf("\nCannot get trigger collection: %x", hr);
@@ -183,7 +183,6 @@ int main()
     //  Add the time trigger to the task.
     ITrigger* pTrigger{};
     hr = pTriggerCollection->Create(TASK_TRIGGER_TIME, &pTrigger);
-    pTriggerCollection->Release();
     if (FAILED(hr))
     {
         printf("\nCannot create trigger: %x", hr);
