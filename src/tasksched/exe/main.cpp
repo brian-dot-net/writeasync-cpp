@@ -155,8 +155,8 @@ int main()
     }
 
     // Set the idle settings for the task.
-    IIdleSettings* pIdleSettings{};
-    hr = pSettings->get_IdleSettings(&pIdleSettings);
+    wil::com_ptr_nothrow<IIdleSettings> pIdleSettings;
+    hr = pSettings->get_IdleSettings(pIdleSettings.put());
     if (FAILED(hr))
     {
         printf("\nCannot get idle setting information: %x", hr);
@@ -164,7 +164,6 @@ int main()
     }
 
     hr = pIdleSettings->put_WaitTimeout(_bstr_t(L"PT5M"));
-    pIdleSettings->Release();
     if (FAILED(hr))
     {
         printf("\nCannot put idle setting information: %x", hr);
