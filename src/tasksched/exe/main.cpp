@@ -71,7 +71,7 @@ int main()
 
     //  ------------------------------------------------------
     //  Create an instance of the Task Service.
-    auto pService = wil::CoCreateInstanceNoThrow<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER);
+    auto pService = wil::CoCreateInstance<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER);
     if (!pService)
     {
         printf("Failed to create an instance of ITaskService");
@@ -89,7 +89,7 @@ int main()
     //  ------------------------------------------------------
     //  Get the pointer to the root task folder.  This folder will hold the
     //  new task that is registered.
-    wil::com_ptr_nothrow<ITaskFolder> pRootFolder;
+    wil::com_ptr<ITaskFolder> pRootFolder;
     hr = pService->GetFolder(_bstr_t(L"\\"), pRootFolder.put());
     if (FAILED(hr))
     {
@@ -101,7 +101,7 @@ int main()
     pRootFolder->DeleteTask(_bstr_t(wszTaskName), 0);
 
     //  Create the task definition object to create the task.
-    wil::com_ptr_nothrow<ITaskDefinition> pTask;
+    wil::com_ptr<ITaskDefinition> pTask;
     hr = pService->NewTask(0, pTask.put());
 
     if (FAILED(hr))
@@ -112,7 +112,7 @@ int main()
 
     //  ------------------------------------------------------
     //  Get the registration info for setting the identification.
-    wil::com_ptr_nothrow<IRegistrationInfo> pRegInfo;
+    wil::com_ptr<IRegistrationInfo> pRegInfo;
     hr = pTask->get_RegistrationInfo(pRegInfo.put());
     if (FAILED(hr))
     {
@@ -130,7 +130,7 @@ int main()
     //  ------------------------------------------------------
     //  Create the principal for the task - these credentials
     //  are overwritten with the credentials passed to RegisterTaskDefinition
-    wil::com_ptr_nothrow<IPrincipal> pPrincipal;
+    wil::com_ptr<IPrincipal> pPrincipal;
     hr = pTask->get_Principal(pPrincipal.put());
     if (FAILED(hr))
     {
@@ -148,7 +148,7 @@ int main()
 
     //  ------------------------------------------------------
     //  Create the settings for the task
-    wil::com_ptr_nothrow<ITaskSettings> pSettings;
+    wil::com_ptr<ITaskSettings> pSettings;
     hr = pTask->get_Settings(pSettings.put());
     if (FAILED(hr))
     {
@@ -165,7 +165,7 @@ int main()
     }
 
     // Set the idle settings for the task.
-    wil::com_ptr_nothrow<IIdleSettings> pIdleSettings;
+    wil::com_ptr<IIdleSettings> pIdleSettings;
     hr = pSettings->get_IdleSettings(pIdleSettings.put());
     if (FAILED(hr))
     {
@@ -182,7 +182,7 @@ int main()
 
     //  ------------------------------------------------------
     //  Get the trigger collection to insert the time trigger.
-    wil::com_ptr_nothrow<ITriggerCollection> pTriggerCollection;
+    wil::com_ptr<ITriggerCollection> pTriggerCollection;
     hr = pTask->get_Triggers(pTriggerCollection.put());
     if (FAILED(hr))
     {
@@ -191,7 +191,7 @@ int main()
     }
 
     //  Add the time trigger to the task.
-    wil::com_ptr_nothrow<ITrigger> pTrigger;
+    wil::com_ptr<ITrigger> pTrigger;
     hr = pTriggerCollection->Create(TASK_TRIGGER_TIME, pTrigger.put());
     if (FAILED(hr))
     {
@@ -231,7 +231,7 @@ int main()
 
     //  ------------------------------------------------------
     //  Add an action to the task. This task will execute notepad.exe.
-    wil::com_ptr_nothrow<IActionCollection> pActionCollection;
+    wil::com_ptr<IActionCollection> pActionCollection;
 
     //  Get the task action collection pointer.
     hr = pTask->get_Actions(pActionCollection.put());
@@ -242,7 +242,7 @@ int main()
     }
 
     //  Create the action, specifying that it is an executable action.
-    wil::com_ptr_nothrow<IAction> pAction;
+    wil::com_ptr<IAction> pAction;
     hr = pActionCollection->Create(TASK_ACTION_EXEC, pAction.put());
     if (FAILED(hr))
     {
@@ -267,7 +267,7 @@ int main()
 
     //  ------------------------------------------------------
     //  Save the task in the root folder.
-    wil::com_ptr_nothrow<IRegisteredTask> pRegisteredTask;
+    wil::com_ptr<IRegisteredTask> pRegisteredTask;
     hr = pRootFolder->RegisterTaskDefinition(
         _bstr_t(wszTaskName),
         pTask.get(),
