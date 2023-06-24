@@ -50,14 +50,8 @@ int run()
     LPCWSTR wszTaskName = L"Time Trigger Test Task";
 
     //  Get the windows directory and set the path to notepad.exe.
-    auto windir = wil::TryGetEnvironmentVariableW(L"WINDIR");
+    auto windir = wil::GetEnvironmentVariableW(L"WINDIR");
     std::wstring wstrExecutablePath(windir.get());
-    if (wstrExecutablePath.empty())
-    {
-        printf("Failed to get environment variable");
-        return 1;
-    }
-
     wstrExecutablePath += L"\\SYSTEM32\\NOTEPAD.EXE";
 
     //  ------------------------------------------------------
