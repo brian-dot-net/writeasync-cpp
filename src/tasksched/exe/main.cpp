@@ -8,6 +8,7 @@
 #include <taskschd.h>
 
 #include <wil/resource.h>
+#include <wil/win32_helpers.h>
 
 using unique_couninitialize_call = wil::unique_call<decltype(&::CoUninitialize), ::CoUninitialize>;
 
@@ -47,18 +48,8 @@ int main()
     LPCWSTR wszTaskName = L"Time Trigger Test Task";
 
     //  Get the windows directory and set the path to notepad.exe.
-    size_t requiredCount{};
-    std::wstring wstrExecutablePath;
-    _wgetenv_s(&requiredCount, nullptr, 0, L"WINDIR");
-    if (requiredCount > 0)
-    {
-        std::vector<wchar_t> buf(requiredCount);
-        if (_wgetenv_s(&requiredCount, buf.data(), buf.size(), L"WINDIR") == 0)
-        {
-            wstrExecutablePath.assign(buf.data());
-        }
-    }
-
+    auto windir = wil::TryGetEnvironmentVariableW(L"WINDIR");
+    std::wstring wstrExecutablePath(windir.get());
     if (wstrExecutablePath.empty())
     {
         printf("Failed to get environment variable");
