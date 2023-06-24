@@ -17,6 +17,8 @@ target_compile_features(tasksched-app PUBLIC cxx_std_20)
 
 target_link_libraries(tasksched-app
     tasksched-core
+    taskschd.lib
+    comsupp.lib
 )
 
 find_package(GTest REQUIRED)
