@@ -138,8 +138,8 @@ int main()
 
     //  ------------------------------------------------------
     //  Create the settings for the task
-    ITaskSettings* pSettings{};
-    hr = pTask->get_Settings(&pSettings);
+    wil::com_ptr_nothrow<ITaskSettings> pSettings;
+    hr = pTask->get_Settings(pSettings.put());
     if (FAILED(hr))
     {
         printf("\nCannot get settings pointer: %x", hr);
@@ -148,7 +148,6 @@ int main()
 
     //  Set setting values for the task.
     hr = pSettings->put_StartWhenAvailable(VARIANT_TRUE);
-    pSettings->Release();
     if (FAILED(hr))
     {
         printf("\nCannot put setting information: %x", hr);
