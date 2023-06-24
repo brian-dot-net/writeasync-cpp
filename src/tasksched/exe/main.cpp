@@ -232,28 +232,23 @@ int main()
     }
 
     //  Create the action, specifying that it is an executable action.
-    IAction* pAction{};
-    hr = pActionCollection->Create(TASK_ACTION_EXEC, &pAction);
+    wil::com_ptr_nothrow<IAction> pAction;
+    hr = pActionCollection->Create(TASK_ACTION_EXEC, pAction.put());
     if (FAILED(hr))
     {
         printf("\nCannot create the action: %x", hr);
         return 1;
     }
 
-    void* pExecActionVoid{};
-    //  QI for the executable task pointer.
-    hr = pAction->QueryInterface(IID_IExecAction, &pExecActionVoid);
-    pAction->Release();
-    if (FAILED(hr))
+    auto pExecAction = pAction.try_query<IExecAction>();
+    if (!pExecAction)
     {
-        printf("\nQueryInterface call failed for IExecAction: %x", hr);
+        printf("\nQueryInterface call failed for IExecAction");
         return 1;
     }
 
     //  Set the path of the executable to notepad.exe.
-    IExecAction* pExecAction = static_cast<IExecAction*>(pExecActionVoid);
     hr = pExecAction->put_Path(_bstr_t(wstrExecutablePath.c_str()));
-    pExecAction->Release();
     if (FAILED(hr))
     {
         printf("\nCannot put action path: %x", hr);
