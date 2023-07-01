@@ -69,13 +69,6 @@ void run()
     auto pService = connect_task_service();
     auto pRootFolder = get_root_folder(*pService);
 
-    //  ------------------------------------------------------
-    //  Create a name for the task.
-    LPCWSTR wszTaskName = L"Time Trigger Test Task";
-
-    //  If the same task exists, remove it.
-    pRootFolder->DeleteTask(_bstr_t(wszTaskName), 0);
-
     //  Create the task definition object to create the task.
     wil::com_ptr<ITaskDefinition> pTask;
     THROW_IF_FAILED_MSG(pService->NewTask(0, pTask.put()), "Failed to create a new task definition");
@@ -143,6 +136,10 @@ void run()
     //  Set the path of the executable to notepad.exe.
     auto wstrExecutablePath = get_executable_path();
     THROW_IF_FAILED_MSG(pExecAction->put_Path(_bstr_t(wstrExecutablePath.c_str())), "Cannot put action path");
+
+    //  ------------------------------------------------------
+    //  Create a name for the task.
+    LPCWSTR wszTaskName = L"Time Trigger Test Task";
 
     //  ------------------------------------------------------
     //  Save the task in the root folder.
