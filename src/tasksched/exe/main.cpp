@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -85,6 +86,19 @@ void set_logon_type(ITaskDefinition& pTask, TASK_LOGON_TYPE logon)
     THROW_IF_FAILED_MSG(pPrincipal->put_LogonType(logon), "Cannot put principal info");
 }
 
+void set_settings(ITaskDefinition& pTask, bool start_when_available, std::chrono::minutes wait_timeout)
+{
+    wil::com_ptr<ITaskSettings> pSettings;
+    THROW_IF_FAILED_MSG(pTask.get_Settings(pSettings.put()), "Cannot get settings pointer");
+
+    THROW_IF_FAILED_MSG(pSettings->put_StartWhenAvailable(start_when_available ? VARIANT_TRUE : VARIANT_FALSE), "Cannot put setting information");
+
+    wil::com_ptr<IIdleSettings> pIdleSettings;
+    THROW_IF_FAILED_MSG(pSettings->get_IdleSettings(pIdleSettings.put()), "Cannot get idle setting information");
+    std::wstring timeout = std::format(L"PT{}M", wait_timeout.count());
+    THROW_IF_FAILED_MSG(pIdleSettings->put_WaitTimeout(_bstr_t(timeout.c_str())), "Cannot put idle setting information");
+}
+
 void run()
 {
     auto cleanup = init_com();
@@ -93,19 +107,7 @@ void run()
     auto pTask = create_task(*pService);
     set_author(*pTask, L"Author Name");
     set_logon_type(*pTask, TASK_LOGON_INTERACTIVE_TOKEN);
-
-    //  ------------------------------------------------------
-    //  Create the settings for the task
-    wil::com_ptr<ITaskSettings> pSettings;
-    THROW_IF_FAILED_MSG(pTask->get_Settings(pSettings.put()), "Cannot get settings pointer");
-
-    //  Set setting values for the task.
-    THROW_IF_FAILED_MSG(pSettings->put_StartWhenAvailable(VARIANT_TRUE), "Cannot put setting information");
-
-    // Set the idle settings for the task.
-    wil::com_ptr<IIdleSettings> pIdleSettings;
-    THROW_IF_FAILED_MSG(pSettings->get_IdleSettings(pIdleSettings.put()), "Cannot get idle setting information");
-    THROW_IF_FAILED_MSG(pIdleSettings->put_WaitTimeout(_bstr_t(L"PT5M")), "Cannot put idle setting information");
+    set_settings(*pTask, true, std::chrono::minutes(5));
 
     //  ------------------------------------------------------
     //  Get the trigger collection to insert the time trigger.
