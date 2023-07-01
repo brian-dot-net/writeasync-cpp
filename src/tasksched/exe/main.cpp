@@ -77,6 +77,14 @@ void set_author(ITaskDefinition& pTask, LPCWSTR author)
     THROW_IF_FAILED_MSG(pRegInfo->put_Author(_bstr_t(author)), "Cannot put identification info");
 }
 
+void set_logon_type(ITaskDefinition& pTask, TASK_LOGON_TYPE logon)
+{
+    wil::com_ptr<IPrincipal> pPrincipal;
+    THROW_IF_FAILED_MSG(pTask.get_Principal(pPrincipal.put()), "Cannot get principal pointer");
+    //  Set up principal logon type to interactive logon
+    THROW_IF_FAILED_MSG(pPrincipal->put_LogonType(logon), "Cannot put principal info");
+}
+
 void run()
 {
     auto cleanup = init_com();
@@ -84,15 +92,7 @@ void run()
     auto pRootFolder = get_root_folder(*pService);
     auto pTask = create_task(*pService);
     set_author(*pTask, L"Author Name");
-
-    //  ------------------------------------------------------
-    //  Create the principal for the task - these credentials
-    //  are overwritten with the credentials passed to RegisterTaskDefinition
-    wil::com_ptr<IPrincipal> pPrincipal;
-    THROW_IF_FAILED_MSG(pTask->get_Principal(pPrincipal.put()), "Cannot get principal pointer");
-
-    //  Set up principal logon type to interactive logon
-    THROW_IF_FAILED_MSG(pPrincipal->put_LogonType(TASK_LOGON_INTERACTIVE_TOKEN), "Cannot put principal info");
+    set_logon_type(*pTask, TASK_LOGON_INTERACTIVE_TOKEN);
 
     //  ------------------------------------------------------
     //  Create the settings for the task
