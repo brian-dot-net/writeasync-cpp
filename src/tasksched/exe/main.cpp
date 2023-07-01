@@ -56,16 +56,18 @@ auto connect_task_service()
     return pService;
 }
 
+auto get_root_folder(ITaskService& pService)
+{
+    wil::com_ptr<ITaskFolder> pRootFolder;
+    THROW_IF_FAILED_MSG(pService.GetFolder(_bstr_t(L"\\"), pRootFolder.put()), "Cannot get Root folder pointer");
+    return pRootFolder;
+}
+
 void run()
 {
     auto cleanup = init_com();
     auto pService = connect_task_service();
-
-    //  ------------------------------------------------------
-    //  Get the pointer to the root task folder.  This folder will hold the
-    //  new task that is registered.
-    wil::com_ptr<ITaskFolder> pRootFolder;
-    THROW_IF_FAILED_MSG(pService->GetFolder(_bstr_t(L"\\"), pRootFolder.put()), "Cannot get Root folder pointer");
+    auto pRootFolder = get_root_folder(*pService);
 
     //  ------------------------------------------------------
     //  Create a name for the task.
