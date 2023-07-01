@@ -41,18 +41,17 @@ auto init_com()
     return cleanup;
 }
 
-void run()
+auto get_executable_path()
 {
-    auto cleanup = init_com();
-
-    //  ------------------------------------------------------
-    //  Create a name for the task.
-    LPCWSTR wszTaskName = L"Time Trigger Test Task";
-
-    //  Get the windows directory and set the path to notepad.exe.
     auto windir = wil::GetEnvironmentVariableW(L"WINDIR");
     std::wstring wstrExecutablePath(windir.get());
     wstrExecutablePath += L"\\SYSTEM32\\NOTEPAD.EXE";
+    return wstrExecutablePath;
+}
+
+void run()
+{
+    auto cleanup = init_com();
 
     //  ------------------------------------------------------
     //  Create an instance of the Task Service.
@@ -66,6 +65,10 @@ void run()
     //  new task that is registered.
     wil::com_ptr<ITaskFolder> pRootFolder;
     THROW_IF_FAILED_MSG(pService->GetFolder(_bstr_t(L"\\"), pRootFolder.put()), "Cannot get Root folder pointer");
+
+    //  ------------------------------------------------------
+    //  Create a name for the task.
+    LPCWSTR wszTaskName = L"Time Trigger Test Task";
 
     //  If the same task exists, remove it.
     pRootFolder->DeleteTask(_bstr_t(wszTaskName), 0);
@@ -135,6 +138,7 @@ void run()
     auto pExecAction = pAction.query<IExecAction>();
 
     //  Set the path of the executable to notepad.exe.
+    auto wstrExecutablePath = get_executable_path();
     THROW_IF_FAILED_MSG(pExecAction->put_Path(_bstr_t(wstrExecutablePath.c_str())), "Cannot put action path");
 
     //  ------------------------------------------------------
