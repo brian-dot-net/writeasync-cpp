@@ -11,7 +11,7 @@
 #include <wil/resource.h>
 #include <wil/win32_helpers.h>
 
-void run()
+void init_wil() noexcept
 {
     // Print every log message to standard out.
     wil::SetResultLoggingCallback([](wil::FailureInfo const& failure) noexcept {
@@ -22,7 +22,10 @@ void run()
             std::fputws(logMessage, stdout);
         }
     });
+}
 
+void run()
+{
     //  ------------------------------------------------------
     //  Initialize COM.
     auto cleanup = wil::CoInitializeEx(COINIT_MULTITHREADED);
@@ -150,6 +153,7 @@ void run()
 int main()
 try
 {
+    init_wil();
     run();
     printf("\n Success! Task successfully registered. ");
 }
