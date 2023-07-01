@@ -63,15 +63,19 @@ auto get_root_folder(ITaskService& pService)
     return pRootFolder;
 }
 
+auto create_task(ITaskService& pService)
+{
+    wil::com_ptr<ITaskDefinition> pTask;
+    THROW_IF_FAILED_MSG(pService.NewTask(0, pTask.put()), "Failed to create a new task definition");
+    return pTask;
+}
+
 void run()
 {
     auto cleanup = init_com();
     auto pService = connect_task_service();
     auto pRootFolder = get_root_folder(*pService);
-
-    //  Create the task definition object to create the task.
-    wil::com_ptr<ITaskDefinition> pTask;
-    THROW_IF_FAILED_MSG(pService->NewTask(0, pTask.put()), "Failed to create a new task definition");
+    auto pTask = create_task(*pService);
 
     //  ------------------------------------------------------
     //  Get the registration info for setting the identification.
