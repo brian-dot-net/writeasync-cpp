@@ -24,13 +24,9 @@ void init_wil() noexcept
     });
 }
 
-void run()
+auto init_com()
 {
-    //  ------------------------------------------------------
-    //  Initialize COM.
     auto cleanup = wil::CoInitializeEx(COINIT_MULTITHREADED);
-
-    //  Set general COM security levels.
     THROW_IF_FAILED_MSG(CoInitializeSecurity(
         nullptr,
         -1,
@@ -42,6 +38,12 @@ void run()
         0,
         nullptr),
         "CoInitializeSecurity failed");
+    return cleanup;
+}
+
+void run()
+{
+    auto cleanup = init_com();
 
     //  ------------------------------------------------------
     //  Create a name for the task.
