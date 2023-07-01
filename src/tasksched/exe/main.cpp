@@ -70,18 +70,20 @@ auto create_task(ITaskService& pService)
     return pTask;
 }
 
+void set_author(ITaskDefinition& pTask, LPCWSTR author)
+{
+    wil::com_ptr<IRegistrationInfo> pRegInfo;
+    THROW_IF_FAILED_MSG(pTask.get_RegistrationInfo(pRegInfo.put()), "Cannot get identification pointer");
+    THROW_IF_FAILED_MSG(pRegInfo->put_Author(_bstr_t(author)), "Cannot put identification info");
+}
+
 void run()
 {
     auto cleanup = init_com();
     auto pService = connect_task_service();
     auto pRootFolder = get_root_folder(*pService);
     auto pTask = create_task(*pService);
-
-    //  ------------------------------------------------------
-    //  Get the registration info for setting the identification.
-    wil::com_ptr<IRegistrationInfo> pRegInfo;
-    THROW_IF_FAILED_MSG(pTask->get_RegistrationInfo(pRegInfo.put()), "Cannot get identification pointer");
-    THROW_IF_FAILED_MSG(pRegInfo->put_Author(_bstr_t(L"Author Name")), "Cannot put identification info");
+    set_author(*pTask, L"Author Name");
 
     //  ------------------------------------------------------
     //  Create the principal for the task - these credentials
