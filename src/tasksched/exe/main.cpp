@@ -49,16 +49,17 @@ auto get_executable_path()
     return wstrExecutablePath;
 }
 
+auto connect_task_service()
+{
+    auto pService = wil::CoCreateInstance<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER);
+    THROW_IF_FAILED_MSG(pService->Connect({}, {}, {}, {}), "ITaskService::Connect failed");
+    return pService;
+}
+
 void run()
 {
     auto cleanup = init_com();
-
-    //  ------------------------------------------------------
-    //  Create an instance of the Task Service.
-    auto pService = wil::CoCreateInstance<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER);
-
-    //  Connect to the task service.
-    THROW_IF_FAILED_MSG(pService->Connect({}, {}, {}, {}), "ITaskService::Connect failed");
+    auto pService = connect_task_service();
 
     //  ------------------------------------------------------
     //  Get the pointer to the root task folder.  This folder will hold the
