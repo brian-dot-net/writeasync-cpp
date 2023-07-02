@@ -1,7 +1,6 @@
-#include <stdio.h>
-
 #include <chrono>
 #include <format>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -176,6 +175,6 @@ try
 {
     init_wil();
     run();
-    printf("\n Success! Task successfully registered. ");
+    std::cout << "Success! Task successfully registered.\n";
 }
 CATCH_RETURN()
