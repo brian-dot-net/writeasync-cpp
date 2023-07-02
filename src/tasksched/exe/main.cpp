@@ -58,27 +58,39 @@ auto get_executable_path()
     return wstrExecutablePath;
 }
 
-auto connect_task_service()
+class TaskService
 {
-    auto pService = wil::CoCreateInstance<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER);
-    THROW_IF_FAILED_MSG(pService->Connect({}, {}, {}, {}), "ITaskService::Connect failed");
-    return pService;
-}
+public:
+    static auto connect()
+    {
+        TaskService service(wil::CoCreateInstance<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER));
+        THROW_IF_FAILED_MSG(service.m_service->Connect({}, {}, {}, {}), "ITaskService::Connect failed");
+        return service;
+    }
 
-auto get_root_folder(ITaskService& pService)
-{
-    wil::com_ptr<ITaskFolder> pRootFolder;
-    auto path = wil::make_bstr(L"\\");
-    THROW_IF_FAILED_MSG(pService.GetFolder(path.get(), pRootFolder.put()), "Cannot get Root folder pointer");
-    return pRootFolder;
-}
+    auto get_root_folder()
+    {
+        wil::com_ptr<ITaskFolder> pRootFolder;
+        auto path = wil::make_bstr(L"\\");
+        THROW_IF_FAILED_MSG(m_service->GetFolder(path.get(), pRootFolder.put()), "Cannot get Root folder pointer");
+        return pRootFolder;
+    }
 
-auto create_task(ITaskService& pService)
-{
-    wil::com_ptr<ITaskDefinition> pTask;
-    THROW_IF_FAILED_MSG(pService.NewTask(0, pTask.put()), "Failed to create a new task definition");
-    return pTask;
-}
+    auto create_task()
+    {
+        wil::com_ptr<ITaskDefinition> pTask;
+        THROW_IF_FAILED_MSG(m_service->NewTask(0, pTask.put()), "Failed to create a new task definition");
+        return pTask;
+    }
+
+private:
+    TaskService(wil::com_ptr<ITaskService> service)
+        : m_service(std::move(service))
+    {
+    }
+
+    wil::com_ptr<ITaskService> m_service;
+};
 
 void set_author(ITaskDefinition& pTask, LPCWSTR author)
 {
@@ -165,9 +177,9 @@ void save(ITaskDefinition& pTask, LPCWSTR name, ITaskFolder& pRootFolder)
 void run()
 {
     auto cleanup = init_com();
-    auto pService = connect_task_service();
-    auto pRootFolder = get_root_folder(*pService);
-    auto pTask = create_task(*pService);
+    auto service = TaskService::connect();
+    auto pRootFolder = service.get_root_folder();
+    auto pTask = service.create_task();
     set_author(*pTask, L"Author Name");
     set_logon_type(*pTask, TASK_LOGON_INTERACTIVE_TOKEN);
     set_settings(*pTask, true, std::chrono::minutes(5));
