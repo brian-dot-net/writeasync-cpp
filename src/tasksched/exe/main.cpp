@@ -5,7 +5,6 @@
 #include <vector>
 
 #include <windows.h>
-#include <comutil.h>
 #include <taskschd.h>
 
 #include <wil/com.h>
@@ -69,7 +68,8 @@ auto connect_task_service()
 auto get_root_folder(ITaskService& pService)
 {
     wil::com_ptr<ITaskFolder> pRootFolder;
-    THROW_IF_FAILED_MSG(pService.GetFolder(_bstr_t(L"\\"), pRootFolder.put()), "Cannot get Root folder pointer");
+    auto path = wil::make_bstr(L"\\");
+    THROW_IF_FAILED_MSG(pService.GetFolder(path.get(), pRootFolder.put()), "Cannot get Root folder pointer");
     return pRootFolder;
 }
 
@@ -84,7 +84,8 @@ void set_author(ITaskDefinition& pTask, LPCWSTR author)
 {
     wil::com_ptr<IRegistrationInfo> pRegInfo;
     THROW_IF_FAILED_MSG(pTask.get_RegistrationInfo(pRegInfo.put()), "Cannot get identification pointer");
-    THROW_IF_FAILED_MSG(pRegInfo->put_Author(_bstr_t(author)), "Cannot put identification info");
+    auto value = wil::make_bstr(author);
+    THROW_IF_FAILED_MSG(pRegInfo->put_Author(value.get()), "Cannot put identification info");
 }
 
 void set_logon_type(ITaskDefinition& pTask, TASK_LOGON_TYPE logon)
@@ -105,7 +106,8 @@ void set_settings(ITaskDefinition& pTask, bool start_when_available, std::chrono
     wil::com_ptr<IIdleSettings> pIdleSettings;
     THROW_IF_FAILED_MSG(pSettings->get_IdleSettings(pIdleSettings.put()), "Cannot get idle setting information");
     std::wstring timeout = std::format(L"PT{}M", wait_timeout.count());
-    THROW_IF_FAILED_MSG(pIdleSettings->put_WaitTimeout(_bstr_t(timeout.c_str())), "Cannot put idle setting information");
+    auto value = wil::make_bstr(timeout.c_str());
+    THROW_IF_FAILED_MSG(pIdleSettings->put_WaitTimeout(value.get()), "Cannot put idle setting information");
 }
 
 void add_time_trigger(ITaskDefinition& pTask, LPCWSTR id, DateTime start, DateTime end)
@@ -118,13 +120,16 @@ void add_time_trigger(ITaskDefinition& pTask, LPCWSTR id, DateTime start, DateTi
     THROW_IF_FAILED_MSG(pTriggerCollection->Create(TASK_TRIGGER_TIME, pTrigger.put()), "Cannot create trigger");
 
     auto pTimeTrigger = pTrigger.query<ITimeTrigger>();
-    THROW_IF_FAILED_MSG(pTimeTrigger->put_Id(_bstr_t(id)), "Cannot put trigger ID");
+    auto value = wil::make_bstr(id);
+    THROW_IF_FAILED_MSG(pTimeTrigger->put_Id(value.get()), "Cannot put trigger ID");
 
     auto end_time = std::format(L"{:%Y-%m-%dT%T}", end);
-    THROW_IF_FAILED_MSG(pTimeTrigger->put_EndBoundary(_bstr_t(end_time.c_str())), "Cannot put end boundary on trigger");
+    value = wil::make_bstr(end_time.c_str());
+    THROW_IF_FAILED_MSG(pTimeTrigger->put_EndBoundary(value.get()), "Cannot put end boundary on trigger");
 
     auto start_time = std::format(L"{:%Y-%m-%dT%T}", start);
-    THROW_IF_FAILED_MSG(pTimeTrigger->put_StartBoundary(_bstr_t(start_time.c_str())), "Cannot add start boundary to trigger");
+    value = wil::make_bstr(start_time.c_str());
+    THROW_IF_FAILED_MSG(pTimeTrigger->put_StartBoundary(value.get()), "Cannot add start boundary to trigger");
 }
 
 void add_exec_action(ITaskDefinition& pTask, const std::wstring& path)
@@ -137,21 +142,22 @@ void add_exec_action(ITaskDefinition& pTask, const std::wstring& path)
     THROW_IF_FAILED_MSG(pActionCollection->Create(TASK_ACTION_EXEC, pAction.put()), "Cannot create the action");
 
     auto pExecAction = pAction.query<IExecAction>();
-
-    THROW_IF_FAILED_MSG(pExecAction->put_Path(_bstr_t(path.c_str())), "Cannot put action path");
+    auto value = wil::make_bstr(path.c_str());
+    THROW_IF_FAILED_MSG(pExecAction->put_Path(value.get()), "Cannot put action path");
 }
 
 void save(ITaskDefinition& pTask, LPCWSTR name, ITaskFolder& pRootFolder)
 {
+    auto value = wil::make_bstr(name);
     wil::com_ptr<IRegisteredTask> pRegisteredTask;
     THROW_IF_FAILED_MSG(pRootFolder.RegisterTaskDefinition(
-        _bstr_t(name),
+        value.get(),
         &pTask,
         TASK_CREATE_OR_UPDATE,
         {},
         {},
         TASK_LOGON_INTERACTIVE_TOKEN,
-        _variant_t(L""),
+        {},
         pRegisteredTask.put()),
         "Error saving the Task");
 }
