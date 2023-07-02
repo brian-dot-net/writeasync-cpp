@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include <chrono>
+#include <format>
 #include <string>
 #include <vector>
 
@@ -11,6 +12,15 @@
 #include <wil/com.h>
 #include <wil/resource.h>
 #include <wil/win32_helpers.h>
+
+using namespace std::chrono_literals;
+
+using DateTime = std::chrono::local_time<std::chrono::seconds>;
+
+DateTime make_date_time(std::chrono::year_month_day date, std::chrono::seconds time)
+{
+    return std::chrono::local_time<std::chrono::days>(date) + time;
+}
 
 void init_wil() noexcept
 {
@@ -99,6 +109,25 @@ void set_settings(ITaskDefinition& pTask, bool start_when_available, std::chrono
     THROW_IF_FAILED_MSG(pIdleSettings->put_WaitTimeout(_bstr_t(timeout.c_str())), "Cannot put idle setting information");
 }
 
+void add_time_trigger(ITaskDefinition& pTask, LPCWSTR id, DateTime start, DateTime end)
+{
+    wil::com_ptr<ITriggerCollection> pTriggerCollection;
+    THROW_IF_FAILED_MSG(pTask.get_Triggers(pTriggerCollection.put()), "Cannot get trigger collection");
+
+    //  Add the time trigger to the task.
+    wil::com_ptr<ITrigger> pTrigger;
+    THROW_IF_FAILED_MSG(pTriggerCollection->Create(TASK_TRIGGER_TIME, pTrigger.put()), "Cannot create trigger");
+
+    auto pTimeTrigger = pTrigger.query<ITimeTrigger>();
+    THROW_IF_FAILED_MSG(pTimeTrigger->put_Id(_bstr_t(id)), "Cannot put trigger ID");
+
+    auto end_time = std::format(L"{:%Y-%m-%dT%T}", end);
+    THROW_IF_FAILED_MSG(pTimeTrigger->put_EndBoundary(_bstr_t(end_time.c_str())), "Cannot put end boundary on trigger");
+
+    auto start_time = std::format(L"{:%Y-%m-%dT%T}", start);
+    THROW_IF_FAILED_MSG(pTimeTrigger->put_StartBoundary(_bstr_t(start_time.c_str())), "Cannot add start boundary to trigger");
+}
+
 void run()
 {
     auto cleanup = init_com();
@@ -108,25 +137,7 @@ void run()
     set_author(*pTask, L"Author Name");
     set_logon_type(*pTask, TASK_LOGON_INTERACTIVE_TOKEN);
     set_settings(*pTask, true, std::chrono::minutes(5));
-
-    //  ------------------------------------------------------
-    //  Get the trigger collection to insert the time trigger.
-    wil::com_ptr<ITriggerCollection> pTriggerCollection;
-    THROW_IF_FAILED_MSG(pTask->get_Triggers(pTriggerCollection.put()), "Cannot get trigger collection");
-
-    //  Add the time trigger to the task.
-    wil::com_ptr<ITrigger> pTrigger;
-    THROW_IF_FAILED_MSG(pTriggerCollection->Create(TASK_TRIGGER_TIME, pTrigger.put()), "Cannot create trigger");
-
-    auto pTimeTrigger = pTrigger.query<ITimeTrigger>();
-    THROW_IF_FAILED_MSG(pTimeTrigger->put_Id(_bstr_t(L"Trigger1")), "Cannot put trigger ID");
-    THROW_IF_FAILED_MSG(pTimeTrigger->put_EndBoundary(_bstr_t(L"2015-05-02T08:00:00")), "Cannot put end boundary on trigger");
-
-    //  Set the task to start at a certain time. The time
-    //  format should be YYYY-MM-DDTHH:MM:SS(+-)(timezone).
-    //  For example, the start boundary below
-    //  is January 1st 2005 at 12:05
-    THROW_IF_FAILED_MSG(pTimeTrigger->put_StartBoundary(_bstr_t(L"2005-01-01T12:05:00")), "Cannot add start boundary to trigger");
+    add_time_trigger(*pTask, L"Trigger1", make_date_time(2005y/1/1, 12h + 5min), make_date_time(2015y/5/2, 8h));
 
     //  ------------------------------------------------------
     //  Add an action to the task. This task will execute notepad.exe.
