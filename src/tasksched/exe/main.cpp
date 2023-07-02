@@ -128,6 +128,20 @@ void add_time_trigger(ITaskDefinition& pTask, LPCWSTR id, DateTime start, DateTi
     THROW_IF_FAILED_MSG(pTimeTrigger->put_StartBoundary(_bstr_t(start_time.c_str())), "Cannot add start boundary to trigger");
 }
 
+void add_exec_action(ITaskDefinition& pTask, const std::wstring& path)
+{
+    wil::com_ptr<IActionCollection> pActionCollection;
+
+    THROW_IF_FAILED_MSG(pTask.get_Actions(pActionCollection.put()), "Cannot get Task collection pointer");
+
+    wil::com_ptr<IAction> pAction;
+    THROW_IF_FAILED_MSG(pActionCollection->Create(TASK_ACTION_EXEC, pAction.put()), "Cannot create the action");
+
+    auto pExecAction = pAction.query<IExecAction>();
+
+    THROW_IF_FAILED_MSG(pExecAction->put_Path(_bstr_t(path.c_str())), "Cannot put action path");
+}
+
 void run()
 {
     auto cleanup = init_com();
@@ -138,23 +152,7 @@ void run()
     set_logon_type(*pTask, TASK_LOGON_INTERACTIVE_TOKEN);
     set_settings(*pTask, true, std::chrono::minutes(5));
     add_time_trigger(*pTask, L"Trigger1", make_date_time(2005y/1/1, 12h + 5min), make_date_time(2015y/5/2, 8h));
-
-    //  ------------------------------------------------------
-    //  Add an action to the task. This task will execute notepad.exe.
-    wil::com_ptr<IActionCollection> pActionCollection;
-
-    //  Get the task action collection pointer.
-    THROW_IF_FAILED_MSG(pTask->get_Actions(pActionCollection.put()), "Cannot get Task collection pointer");
-
-    //  Create the action, specifying that it is an executable action.
-    wil::com_ptr<IAction> pAction;
-    THROW_IF_FAILED_MSG(pActionCollection->Create(TASK_ACTION_EXEC, pAction.put()), "Cannot create the action");
-
-    auto pExecAction = pAction.query<IExecAction>();
-
-    //  Set the path of the executable to notepad.exe.
-    auto wstrExecutablePath = get_executable_path();
-    THROW_IF_FAILED_MSG(pExecAction->put_Path(_bstr_t(wstrExecutablePath.c_str())), "Cannot put action path");
+    add_exec_action(*pTask, get_executable_path());
 
     //  ------------------------------------------------------
     //  Create a name for the task.
