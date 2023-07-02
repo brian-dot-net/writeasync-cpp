@@ -142,6 +142,21 @@ void add_exec_action(ITaskDefinition& pTask, const std::wstring& path)
     THROW_IF_FAILED_MSG(pExecAction->put_Path(_bstr_t(path.c_str())), "Cannot put action path");
 }
 
+void save(ITaskDefinition& pTask, LPCWSTR name, ITaskFolder& pRootFolder)
+{
+    wil::com_ptr<IRegisteredTask> pRegisteredTask;
+    THROW_IF_FAILED_MSG(pRootFolder.RegisterTaskDefinition(
+        _bstr_t(name),
+        &pTask,
+        TASK_CREATE_OR_UPDATE,
+        {},
+        {},
+        TASK_LOGON_INTERACTIVE_TOKEN,
+        _variant_t(L""),
+        pRegisteredTask.put()),
+        "Error saving the Task");
+}
+
 void run()
 {
     auto cleanup = init_com();
@@ -151,26 +166,9 @@ void run()
     set_author(*pTask, L"Author Name");
     set_logon_type(*pTask, TASK_LOGON_INTERACTIVE_TOKEN);
     set_settings(*pTask, true, std::chrono::minutes(5));
-    add_time_trigger(*pTask, L"Trigger1", make_date_time(2005y/1/1, 12h + 5min), make_date_time(2015y/5/2, 8h));
+    add_time_trigger(*pTask, L"Trigger1", make_date_time(2005y / 1 / 1, 12h + 5min), make_date_time(2015y / 5 / 2, 8h));
     add_exec_action(*pTask, get_executable_path());
-
-    //  ------------------------------------------------------
-    //  Create a name for the task.
-    LPCWSTR wszTaskName = L"Time Trigger Test Task";
-
-    //  ------------------------------------------------------
-    //  Save the task in the root folder.
-    wil::com_ptr<IRegisteredTask> pRegisteredTask;
-    THROW_IF_FAILED_MSG(pRootFolder->RegisterTaskDefinition(
-        _bstr_t(wszTaskName),
-        pTask.get(),
-        TASK_CREATE_OR_UPDATE,
-        {},
-        {},
-        TASK_LOGON_INTERACTIVE_TOKEN,
-        _variant_t(L""),
-        pRegisteredTask.put()),
-        "Error saving the Task");
+    save(*pTask, L"Time Trigger Test Task", *pRootFolder);
 }
 
 int main()
