@@ -63,8 +63,7 @@ class Task
 public:
     Task(wil::com_ptr<ITaskDefinition> task)
         : m_task(std::move(task))
-    {
-    }
+    {}
 
     ITaskDefinition& get()
     {
@@ -141,6 +140,33 @@ private:
     wil::com_ptr<ITaskDefinition> m_task;
 };
 
+class TaskFolder
+{
+public:
+    TaskFolder(wil::com_ptr<ITaskFolder> folder)
+        : m_folder(std::move(folder))
+    {}
+
+    void save(Task& task, LPCWSTR name)
+    {
+        auto value = wil::make_bstr(name);
+        wil::com_ptr<IRegisteredTask> pRegisteredTask;
+        THROW_IF_FAILED_MSG(m_folder->RegisterTaskDefinition(
+            value.get(),
+            &task.get(),
+            TASK_CREATE_OR_UPDATE,
+            {},
+            {},
+            TASK_LOGON_INTERACTIVE_TOKEN,
+            {},
+            pRegisteredTask.put()),
+            "Error saving the Task");
+    }
+
+private:
+    wil::com_ptr<ITaskFolder> m_folder;
+};
+
 class TaskService
 {
 public:
@@ -156,7 +182,7 @@ public:
         wil::com_ptr<ITaskFolder> pRootFolder;
         auto path = wil::make_bstr(L"\\");
         THROW_IF_FAILED_MSG(m_service->GetFolder(path.get(), pRootFolder.put()), "Cannot get Root folder pointer");
-        return pRootFolder;
+        return TaskFolder(std::move(pRootFolder));
     }
 
     auto create_task()
@@ -169,40 +195,23 @@ public:
 private:
     TaskService(wil::com_ptr<ITaskService> service)
         : m_service(std::move(service))
-    {
-    }
+    {}
 
     wil::com_ptr<ITaskService> m_service;
 };
-
-void save(ITaskDefinition& pTask, LPCWSTR name, ITaskFolder& pRootFolder)
-{
-    auto value = wil::make_bstr(name);
-    wil::com_ptr<IRegisteredTask> pRegisteredTask;
-    THROW_IF_FAILED_MSG(pRootFolder.RegisterTaskDefinition(
-        value.get(),
-        &pTask,
-        TASK_CREATE_OR_UPDATE,
-        {},
-        {},
-        TASK_LOGON_INTERACTIVE_TOKEN,
-        {},
-        pRegisteredTask.put()),
-        "Error saving the Task");
-}
 
 void run()
 {
     auto cleanup = init_com();
     auto service = TaskService::connect();
-    auto pRootFolder = service.get_root_folder();
+    auto folder = service.get_root_folder();
     auto task = service.create_task();
     task.set_author(L"Author Name");
     task.set_logon_type(TASK_LOGON_INTERACTIVE_TOKEN);
     task.set_settings(true, std::chrono::minutes(5));
     task.add_time_trigger(L"Trigger1", make_date_time(2005y / 1 / 1, 12h + 5min), make_date_time(2015y / 5 / 2, 8h));
     task.add_exec_action(get_executable_path());
-    save(task.get(), L"Time Trigger Test Task", *pRootFolder);
+    folder.save(task, L"Time Trigger Test Task");
 }
 
 int main()
