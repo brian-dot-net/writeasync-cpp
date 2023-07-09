@@ -1,5 +1,5 @@
 add_library(tasksched-core
-    "lib/todo.cpp"
+    "lib/date_time.cpp"
 )
 
 target_compile_features(tasksched-core PUBLIC cxx_std_20)
@@ -27,7 +27,7 @@ target_link_libraries(tasksched-app
 find_package(GTest REQUIRED)
 
 add_executable(tasksched-test
-    "test/todo_test.cpp"
+    "test/date_time_test.cpp"
 )
 
 target_compile_features(tasksched-test PUBLIC cxx_std_20)

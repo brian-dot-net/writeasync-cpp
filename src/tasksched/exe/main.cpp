@@ -1,4 +1,3 @@
-#include <chrono>
 #include <format>
 #include <iostream>
 #include <string>
@@ -11,14 +10,10 @@
 #include <wil/resource.h>
 #include <wil/win32_helpers.h>
 
+#include "date_time.h"
+
+using namespace wacpp;
 using namespace std::chrono_literals;
-
-using DateTime = std::chrono::local_time<std::chrono::seconds>;
-
-DateTime make_date_time(std::chrono::year_month_day date, std::chrono::seconds time)
-{
-    return std::chrono::local_time<std::chrono::days>(date) + time;
-}
 
 void init_wil() noexcept
 {
