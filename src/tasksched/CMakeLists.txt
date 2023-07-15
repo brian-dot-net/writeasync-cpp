@@ -32,6 +32,7 @@ find_package(GTest REQUIRED)
 
 add_executable(tasksched-test
     "test/date_time_test.cpp"
+    "test/stub_taskdef.cpp"
 )
 
 target_compile_features(tasksched-test PUBLIC cxx_std_20)
@@ -40,6 +41,7 @@ target_link_libraries(tasksched-test
     tasksched-core
     GTest::gtest
     GTest::gtest_main
+    WIL::WIL
 )
 
 gtest_discover_tests(tasksched-test)
