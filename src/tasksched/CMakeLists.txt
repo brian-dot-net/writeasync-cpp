@@ -1,5 +1,6 @@
 add_library(tasksched-core
     "lib/date_time.cpp"
+    "lib/task.cpp"
 )
 
 target_compile_features(tasksched-core PUBLIC cxx_std_20)
@@ -11,6 +12,10 @@ target_include_directories(tasksched-core
 
 find_package(WIL REQUIRED)
 
+target_link_libraries(tasksched-core
+    WIL::WIL
+)
+
 add_executable(tasksched-app
     "exe/main.cpp"
 )
@@ -20,7 +25,6 @@ target_compile_features(tasksched-app PUBLIC cxx_std_20)
 target_link_libraries(tasksched-app
     tasksched-core
     taskschd.lib
-    comsupp.lib
     WIL::WIL
 )
 
