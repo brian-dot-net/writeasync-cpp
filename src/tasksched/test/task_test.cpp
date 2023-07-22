@@ -10,6 +10,7 @@
 #include "stub_reginfo.h"
 #include "stub_settings.h"
 #include "stub_taskdef.h"
+#include "stub_triggers.h"
 #include "task.h"
 
 using namespace std::chrono_literals;
@@ -29,6 +30,18 @@ struct Stub
         HRESULT put_StartWhenAvailable_result{};
         HRESULT get_IdleSettings_result{};
         HRESULT put_WaitTimeout_result{};
+        HRESULT get_Triggers_result{};
+    };
+
+    class TriggerCollection : public wacpp::test::Stub_ITriggerCollection
+    {
+    public:
+        TriggerCollection(const Data& data)
+            : m_data(data)
+        {}
+
+    private:
+        const Data& m_data;
     };
 
     class IdleSettings : public wacpp::test::Stub_IIdleSettings
@@ -233,6 +246,7 @@ struct Stub
             : m_data(data)
             , m_registration_info()
             , m_principal()
+            , m_triggers()
         {}
 
         STDMETHODIMP get_XmlText(
@@ -306,7 +320,7 @@ struct Stub
         CATCH_RETURN()
 
         STDMETHODIMP get_Settings(
-            ITaskSettings** ppSettings) noexcept
+            ITaskSettings** ppSettings) noexcept override
         try
         {
             const auto hr = m_data.get_Settings_result;
@@ -320,11 +334,27 @@ struct Stub
         }
         CATCH_RETURN()
 
+        STDMETHODIMP get_Triggers(
+            ITriggerCollection** ppTriggers) noexcept override
+        try
+        {
+            const auto hr = m_data.get_Triggers_result;
+            if (SUCCEEDED(hr))
+            {
+                m_triggers = winrt::make<Stub::TriggerCollection>(m_data);
+                m_triggers.copy_to(ppTriggers);
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
+
     private:
         const Data& m_data;
         winrt::com_ptr<IRegistrationInfo> m_registration_info;
         winrt::com_ptr<IPrincipal> m_principal;
         winrt::com_ptr<ITaskSettings> m_settings;
+        winrt::com_ptr<ITriggerCollection> m_triggers;
     };
 };
 
@@ -464,10 +494,18 @@ TEST(task_test, set_settings)
 
 TEST(task_test, add_time_trigger)
 {
-    Stub::Data data{};
+    Stub::Data data{
+        .get_Triggers_result = E_FAIL,
+    };
     Task task(make_stub_task_definition(data));
     auto start = make_date_time(2020y / 1 / 2, 3h + 4min + 5s);
     auto end = make_date_time(2021y / 2 / 3, 4h + 5min + 6s);
+
+    ASSERT_THROW(task.add_time_trigger(L"Id1", start, end), wil::ResultException);
+
+    assert_xml(task, L"<Task></Task>");
+
+    data.get_Triggers_result = S_OK;
 
     ASSERT_THROW(task.add_time_trigger(L"Id1", start, end), wil::ResultException);
 
