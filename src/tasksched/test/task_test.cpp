@@ -7,6 +7,7 @@
 
 #include <wil/com.h>
 
+#include "stub_actions.h"
 #include "stub_principal.h"
 #include "stub_reginfo.h"
 #include "stub_settings.h"
@@ -56,6 +57,10 @@ struct Stub
         TimeTriggerData TimeTrigger{};
     };
 
+    struct ActionCollectionData
+    {
+    };
+
     struct TaskDefinitionData
     {
         HRESULT get_RegistrationInfo_result{};
@@ -69,6 +74,44 @@ struct Stub
 
         HRESULT get_Triggers_result{};
         TriggerCollectionData TriggerCollection{};
+
+        HRESULT get_Actions_result{};
+        ActionCollectionData ActionCollection{};
+    };
+
+    class ActionCollection : public wacpp::test::Stub_IActionCollection
+    {
+    public:
+        using Data = ActionCollectionData;
+
+        ActionCollection(const Data& data)
+            : m_data(data)
+            , m_actions()
+        {}
+
+        STDMETHODIMP get_Count(
+            long* pCount) noexcept override
+            try
+        {
+            *pCount = static_cast<long>(m_actions.size());
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP get_Item(
+            long index,
+            IAction** ppAction) noexcept override
+        try
+        {
+            auto trigger = m_actions.at(index);
+            trigger.copy_to(ppAction);
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+    private:
+        const Data& m_data;
+        std::vector<winrt::com_ptr<IAction>> m_actions;
     };
 
     class TimeTrigger : public wacpp::test::Stub_ITimeTrigger
@@ -436,6 +479,7 @@ struct Stub
             , m_registration_info()
             , m_principal()
             , m_triggers()
+            , m_actions()
         {}
 
         STDMETHODIMP get_XmlText(
@@ -529,6 +573,25 @@ struct Stub
                 }
 
                 m_triggers.copy_to(ppTriggers);
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP get_Actions(
+            IActionCollection** ppActions) noexcept override
+        try
+        {
+            const auto hr = m_data.get_Actions_result;
+            if (SUCCEEDED(hr))
+            {
+                if (!m_actions)
+                {
+                    m_actions = winrt::make<Stub::ActionCollection>(m_data.ActionCollection);
+                }
+
+                m_actions.copy_to(ppActions);
             }
 
             return hr;
@@ -645,6 +708,7 @@ struct Stub
         winrt::com_ptr<IPrincipal> m_principal;
         winrt::com_ptr<ITaskSettings> m_settings;
         winrt::com_ptr<ITriggerCollection> m_triggers;
+        winrt::com_ptr<IActionCollection> m_actions;
     };
 };
 
@@ -884,10 +948,16 @@ TEST(task_test, add_time_trigger)
 
 TEST(task_test, add_exec_action)
 {
-    Stub::TaskDefinitionData data{};
+    Stub::TaskDefinitionData data{
+        .get_Actions_result = E_FAIL,
+    };
     Task task(make_stub_task_definition(data));
 
-    ASSERT_THROW(task.add_exec_action(L"X:\\act.exe"), wil::ResultException);
+    ASSERT_THROW(task.add_exec_action(L"X:\\act1.exe"), wil::ResultException);
+
+    data.get_Actions_result = S_OK;
+
+    ASSERT_THROW(task.add_exec_action(L"X:\\act2.exe"), wil::ResultException);
 
     assert_xml(task, L"<Task></Task>");
 }
