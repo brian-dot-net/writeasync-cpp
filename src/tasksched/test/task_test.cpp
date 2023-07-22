@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <optional>
+
 #include <windows.h>
 
 #include <wil/com.h>
@@ -26,6 +28,7 @@ struct Stub
         HRESULT get_Settings_result{};
         HRESULT put_StartWhenAvailable_result{};
         HRESULT get_IdleSettings_result{};
+        HRESULT put_WaitTimeout_result{};
     };
 
     class IdleSettings : public wacpp::test::Stub_IIdleSettings
@@ -33,10 +36,36 @@ struct Stub
     public:
         IdleSettings(const Data& data)
             : m_data(data)
+            , m_wait_timeout()
         {}
+
+        STDMETHODIMP get_WaitTimeout(
+            BSTR* pTimeout) noexcept override
+        try
+        {
+            auto timeout = wil::make_bstr(m_wait_timeout.c_str());
+            *pTimeout = timeout.release();
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP put_WaitTimeout(
+            BSTR timeout) noexcept override
+        try
+        {
+            const auto hr = m_data.put_WaitTimeout_result;
+            if (SUCCEEDED(hr))
+            {
+                m_wait_timeout = timeout;
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
 
     private:
         const Data& m_data;
+        std::wstring m_wait_timeout;
     };
 
     class Settings : public wacpp::test::Stub_ITaskSettings
@@ -47,6 +76,40 @@ struct Stub
             , m_start_when_available()
             , m_idle_settings()
         {}
+
+        STDMETHODIMP get_XmlText(
+            BSTR* pXml) noexcept override
+        try
+        {
+            std::wstring inner_xml{};
+            if (m_start_when_available)
+            {
+                inner_xml += std::format(L"<StartWhenAvailable>{}</StartWhenAvailable>", *m_start_when_available);
+            }
+
+            if (m_idle_settings)
+            {
+                wil::unique_bstr str;
+                THROW_IF_FAILED(m_idle_settings->get_WaitTimeout(str.put()));
+                std::wstring wait_timeout = str.get();
+                if (!wait_timeout.empty())
+                {
+                    inner_xml += std::format(L"<WaitTimeout>{}</WaitTimeout>", wait_timeout);
+                }
+            }
+
+            std::wstring xml{};
+            if (!inner_xml.empty())
+            {
+                xml += std::format(L"<Settings>{}</Settings>", inner_xml);
+            }
+
+            auto outer_xml = wil::make_bstr(xml.c_str());
+            *pXml = outer_xml.release();
+
+            return S_OK;
+        }
+        CATCH_RETURN()
 
         STDMETHODIMP put_StartWhenAvailable(
             VARIANT_BOOL startWhenAvailable) noexcept override
@@ -79,7 +142,7 @@ struct Stub
 
     private:
         const Data& m_data;
-        bool m_start_when_available;
+        std::optional<bool> m_start_when_available;
         winrt::com_ptr<IIdleSettings> m_idle_settings;
     };
 
@@ -194,6 +257,13 @@ struct Stub
                 {
                     xml += std::format(L"<LogonType>{}</LogonType>", static_cast<int>(logon));
                 }
+            }
+
+            if (m_settings)
+            {
+                wil::unique_bstr str;
+                THROW_IF_FAILED(m_settings->get_XmlText(str.put()));
+                xml += str.get();
             }
 
             xml += L"</Task>";
@@ -342,28 +412,54 @@ TEST(task_test, set_settings)
         .get_Settings_result = E_FAIL,
         .put_StartWhenAvailable_result = E_FAIL,
         .get_IdleSettings_result = E_FAIL,
+        .put_WaitTimeout_result = E_FAIL,
     };
     Task task(make_stub_task_definition(data));
 
-    ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
+    ASSERT_THROW(task.set_settings(true, 1min), wil::ResultException);
 
     data.get_Settings_result = S_OK;
 
-    ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
+    ASSERT_THROW(task.set_settings(false, 2min), wil::ResultException);
 
     assert_xml(task, L"<Task></Task>");
 
     data.put_StartWhenAvailable_result = S_OK;
 
-    ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
+    ASSERT_THROW(task.set_settings(true, 3min), wil::ResultException);
 
-    assert_xml(task, L"<Task></Task>");
+    auto expected =
+        L"<Task>"
+        L"<Settings>"
+        L"<StartWhenAvailable>true</StartWhenAvailable>"
+        L"</Settings>"
+        L"</Task>";
+    assert_xml(task, expected);
 
     data.get_IdleSettings_result = S_OK;
 
-    ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
+    ASSERT_THROW(task.set_settings(false, 4min), wil::ResultException);
 
-    assert_xml(task, L"<Task></Task>");
+    expected =
+        L"<Task>"
+        L"<Settings>"
+        L"<StartWhenAvailable>false</StartWhenAvailable>"
+        L"</Settings>"
+        L"</Task>";
+    assert_xml(task, expected);
+
+    data.put_WaitTimeout_result = S_OK;
+
+    task.set_settings(true, 5min);
+
+    expected =
+        L"<Task>"
+        L"<Settings>"
+        L"<StartWhenAvailable>true</StartWhenAvailable>"
+        L"<WaitTimeout>PT5M</WaitTimeout>"
+        L"</Settings>"
+        L"</Task>";
+    assert_xml(task, expected);
 }
 
 }
