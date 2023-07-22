@@ -31,6 +31,13 @@ struct Stub
         HRESULT put_LogonType_result{};
     };
 
+    struct TaskSettingsData
+    {
+        HRESULT put_StartWhenAvailable_result{};
+        HRESULT get_IdleSettings_result{};
+        HRESULT put_WaitTimeout_result{};
+    };
+
     struct TaskDefinitionData
     {
         HRESULT get_RegistrationInfo_result{};
@@ -40,9 +47,8 @@ struct Stub
         PrincipalData Principal{};
 
         HRESULT get_Settings_result{};
-        HRESULT put_StartWhenAvailable_result{};
-        HRESULT get_IdleSettings_result{};
-        HRESULT put_WaitTimeout_result{};
+        TaskSettingsData Settings{};
+
         HRESULT get_Triggers_result{};
         HRESULT ITriggerCollection_Create_result{};
         HRESULT ITimeTrigger_put_Id_result{};
@@ -147,7 +153,7 @@ struct Stub
     class IdleSettings : public wacpp::test::Stub_IIdleSettings
     {
     public:
-        using Data = TaskDefinitionData;
+        using Data = TaskSettingsData;
 
         IdleSettings(const Data& data)
             : m_data(data)
@@ -183,12 +189,12 @@ struct Stub
         std::wstring m_wait_timeout;
     };
 
-    class Settings : public wacpp::test::Stub_ITaskSettings
+    class TaskSettings : public wacpp::test::Stub_ITaskSettings
     {
     public:
-        using Data = TaskDefinitionData;
+        using Data = TaskSettingsData;
 
-        Settings(const Data& data)
+        TaskSettings(const Data& data)
             : m_data(data)
             , m_start_when_available()
             , m_idle_settings()
@@ -468,7 +474,7 @@ struct Stub
             const auto hr = m_data.get_Settings_result;
             if (SUCCEEDED(hr))
             {
-                m_settings = winrt::make<Stub::Settings>(m_data);
+                m_settings = winrt::make<Stub::TaskSettings>(m_data.Settings);
                 m_settings.copy_to(ppSettings);
             }
 
@@ -586,9 +592,11 @@ TEST(task_test, set_settings)
 {
     Stub::TaskDefinitionData data{
         .get_Settings_result = E_FAIL,
-        .put_StartWhenAvailable_result = E_FAIL,
-        .get_IdleSettings_result = E_FAIL,
-        .put_WaitTimeout_result = E_FAIL,
+        .Settings = {
+            .put_StartWhenAvailable_result = E_FAIL,
+            .get_IdleSettings_result = E_FAIL,
+            .put_WaitTimeout_result = E_FAIL,
+        }
     };
     Task task(make_stub_task_definition(data));
 
@@ -600,7 +608,7 @@ TEST(task_test, set_settings)
 
     assert_xml(task, L"<Task></Task>");
 
-    data.put_StartWhenAvailable_result = S_OK;
+    data.Settings.put_StartWhenAvailable_result = S_OK;
 
     ASSERT_THROW(task.set_settings(true, 3min), wil::ResultException);
 
@@ -612,7 +620,7 @@ TEST(task_test, set_settings)
         L"</Task>";
     assert_xml(task, expected);
 
-    data.get_IdleSettings_result = S_OK;
+    data.Settings.get_IdleSettings_result = S_OK;
 
     ASSERT_THROW(task.set_settings(false, 4min), wil::ResultException);
 
@@ -624,7 +632,7 @@ TEST(task_test, set_settings)
         L"</Task>";
     assert_xml(task, expected);
 
-    data.put_WaitTimeout_result = S_OK;
+    data.Settings.put_WaitTimeout_result = S_OK;
 
     task.set_settings(true, 5min);
 
