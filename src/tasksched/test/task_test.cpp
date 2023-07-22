@@ -21,7 +21,7 @@ namespace
 
 struct Stub
 {
-    struct Data
+    struct TaskDefinitionData
     {
         HRESULT get_RegistrationInfo_result{};
         HRESULT put_Author_result{};
@@ -39,6 +39,8 @@ struct Stub
     class TimeTrigger : public wacpp::test::Stub_ITimeTrigger
     {
     public:
+        using Data = TaskDefinitionData;
+
         TimeTrigger(const Data& data)
             : m_data(data)
             , m_id()
@@ -76,6 +78,8 @@ struct Stub
     class TriggerCollection : public wacpp::test::Stub_ITriggerCollection
     {
     public:
+        using Data = TaskDefinitionData;
+
         TriggerCollection(const Data& data)
             : m_data(data)
             , m_triggers()
@@ -131,6 +135,8 @@ struct Stub
     class IdleSettings : public wacpp::test::Stub_IIdleSettings
     {
     public:
+        using Data = TaskDefinitionData;
+
         IdleSettings(const Data& data)
             : m_data(data)
             , m_wait_timeout()
@@ -168,6 +174,8 @@ struct Stub
     class Settings : public wacpp::test::Stub_ITaskSettings
     {
     public:
+        using Data = TaskDefinitionData;
+
         Settings(const Data& data)
             : m_data(data)
             , m_start_when_available()
@@ -246,6 +254,8 @@ struct Stub
     class Principal : public wacpp::test::Stub_IPrincipal
     {
     public:
+        using Data = TaskDefinitionData;
+
         Principal(const Data& data)
             : m_data(data)
             , m_logon()
@@ -282,6 +292,8 @@ struct Stub
     class RegistrationInfo : public wacpp::test::Stub_IRegistrationInfo
     {
     public:
+        using Data = TaskDefinitionData;
+
         RegistrationInfo(const Data& data)
             : m_data(data)
             , m_author()
@@ -326,6 +338,8 @@ struct Stub
     class TaskDefinition : public wacpp::test::Stub_ITaskDefinition
     {
     public:
+        using Data = TaskDefinitionData;
+
         TaskDefinition(const Data& data)
             : m_data(data)
             , m_registration_info()
@@ -474,7 +488,7 @@ struct Stub
     };
 };
 
-wil::com_ptr<ITaskDefinition> make_stub_task_definition(const Stub::Data& data)
+wil::com_ptr<ITaskDefinition> make_stub_task_definition(const Stub::TaskDefinitionData& data)
 {
     auto ptr = winrt::make<Stub::TaskDefinition>(data);
     return wil::make_com_ptr(ptr.detach());
@@ -496,7 +510,7 @@ namespace wacpp::test
 
 TEST(task_test, set_author)
 {
-    Stub::Data data{
+    Stub::TaskDefinitionData data{
         .get_RegistrationInfo_result = E_FAIL,
         .put_Author_result = E_FAIL,
     };
@@ -525,7 +539,7 @@ TEST(task_test, set_author)
 
 TEST(task_test, set_logon_type)
 {
-    Stub::Data data{
+    Stub::TaskDefinitionData data{
         .get_Principal_result = E_FAIL,
         .put_LogonType = E_FAIL,
     };
@@ -554,7 +568,7 @@ TEST(task_test, set_logon_type)
 
 TEST(task_test, set_settings)
 {
-    Stub::Data data{
+    Stub::TaskDefinitionData data{
         .get_Settings_result = E_FAIL,
         .put_StartWhenAvailable_result = E_FAIL,
         .get_IdleSettings_result = E_FAIL,
@@ -610,7 +624,7 @@ TEST(task_test, set_settings)
 
 TEST(task_test, add_time_trigger)
 {
-    Stub::Data data{
+    Stub::TaskDefinitionData data{
         .get_Triggers_result = E_FAIL,
         .ITriggerCollection_Create_result = E_FAIL,
         .ITimeTrigger_put_Id_result = E_FAIL,
