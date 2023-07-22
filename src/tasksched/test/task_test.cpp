@@ -324,7 +324,11 @@ struct Stub
             const auto hr = m_data.get_IdleSettings_result;
             if (SUCCEEDED(hr))
             {
-                m_idle_settings = winrt::make<Stub::IdleSettings>(m_data.IdleSettings);
+                if (!m_idle_settings)
+                {
+                    m_idle_settings = winrt::make<Stub::IdleSettings>(m_data.IdleSettings);
+                }
+
                 m_idle_settings.copy_to(ppIdleSettings);
             }
 
