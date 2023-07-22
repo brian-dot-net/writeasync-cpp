@@ -46,6 +46,7 @@ struct Stub
     struct TimeTriggerData
     {
         HRESULT put_Id_result{};
+        HRESULT put_EndBoundary_result{};
     };
 
     struct TriggerCollectionData
@@ -77,6 +78,7 @@ struct Stub
         TimeTrigger(const Data& data)
             : m_data(data)
             , m_id()
+            , m_end()
         {}
 
         STDMETHODIMP get_Id(
@@ -103,9 +105,34 @@ struct Stub
         }
         CATCH_RETURN()
 
+        STDMETHODIMP get_EndBoundary(
+            BSTR* pEnd) noexcept override
+        try
+        {
+            auto end = wil::make_bstr(m_end.c_str());
+            *pEnd = end.release();
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP put_EndBoundary(
+            BSTR end) noexcept override
+        try
+        {
+            const auto hr = m_data.put_EndBoundary_result;
+            if (SUCCEEDED(hr))
+            {
+                m_end = end;
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
+
     private:
         const Data& m_data;
         std::wstring m_id;
+        std::wstring m_end;
     };
 
     class TriggerCollection : public wacpp::test::Stub_ITriggerCollection
@@ -434,6 +461,14 @@ struct Stub
                         inner_xml += std::format(L"<Id>{}</Id>", id);
                     }
 
+                    wil::unique_bstr endb{};
+                    THROW_IF_FAILED(time_trigger->get_EndBoundary(endb.put()));
+                    std::wstring end = endb.get();
+                    if (!end.empty())
+                    {
+                        inner_xml += std::format(L"<EndBoundary>{}</EndBoundary>", end);
+                    }
+
                     inner_xml += L"</TimeTrigger>";
                 }
 
@@ -504,7 +539,11 @@ struct Stub
             const auto hr = m_data.get_Triggers_result;
             if (SUCCEEDED(hr))
             {
-                m_triggers = winrt::make<Stub::TriggerCollection>(m_data.TriggerCollection);
+                if (!m_triggers)
+                {
+                    m_triggers = winrt::make<Stub::TriggerCollection>(m_data.TriggerCollection);
+                }
+
                 m_triggers.copy_to(ppTriggers);
             }
 
@@ -671,6 +710,7 @@ TEST(task_test, add_time_trigger)
             .Create_result = E_FAIL,
             .TimeTrigger {
                 .put_Id_result = E_FAIL,
+                .put_EndBoundary_result = E_FAIL,
             },
         }
     };
@@ -695,8 +735,7 @@ TEST(task_test, add_time_trigger)
     auto expected =
         L"<Task>"
         L"<Triggers>"
-        L"<TimeTrigger>"
-        L"</TimeTrigger>"
+        L"<TimeTrigger></TimeTrigger>"
         L"</Triggers>"
         L"</Task>";
     assert_xml(task, expected);
@@ -708,7 +747,25 @@ TEST(task_test, add_time_trigger)
     expected =
         L"<Task>"
         L"<Triggers>"
+        L"<TimeTrigger></TimeTrigger>"
         L"<TimeTrigger><Id>Id4</Id></TimeTrigger>"
+        L"</Triggers>"
+        L"</Task>";
+    assert_xml(task, expected);
+
+    data.TriggerCollection.TimeTrigger.put_EndBoundary_result = S_OK;
+
+    ASSERT_THROW(task.add_time_trigger(L"Id5", start, end), wil::ResultException);
+
+    expected =
+        L"<Task>"
+        L"<Triggers>"
+        L"<TimeTrigger></TimeTrigger>"
+        L"<TimeTrigger><Id>Id4</Id></TimeTrigger>"
+        L"<TimeTrigger>"
+        L"<Id>Id5</Id>"
+        L"<EndBoundary>2021-02-03T04:05:06</EndBoundary>"
+        L"</TimeTrigger>"
         L"</Triggers>"
         L"</Task>";
     assert_xml(task, expected);
