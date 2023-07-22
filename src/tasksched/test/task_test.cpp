@@ -43,10 +43,15 @@ struct Stub
         IdleSettingsData IdleSettings{};
     };
 
+    struct TimeTriggerData
+    {
+        HRESULT put_Id_result{};
+    };
+
     struct TriggerCollectionData
     {
         HRESULT Create_result{};
-        HRESULT ITimeTrigger_put_Id_result{};
+        TimeTriggerData TimeTrigger{};
     };
 
     struct TaskDefinitionData
@@ -67,7 +72,7 @@ struct Stub
     class TimeTrigger : public wacpp::test::Stub_ITimeTrigger
     {
     public:
-        using Data = TriggerCollectionData;
+        using Data = TimeTriggerData;
 
         TimeTrigger(const Data& data)
             : m_data(data)
@@ -88,7 +93,7 @@ struct Stub
             BSTR id) noexcept override
         try
         {
-            const auto hr = m_data.ITimeTrigger_put_Id_result;
+            const auto hr = m_data.put_Id_result;
             if (SUCCEEDED(hr))
             {
                 m_id = id;
@@ -146,7 +151,7 @@ struct Stub
             const auto hr = m_data.Create_result;
             if (SUCCEEDED(hr))
             {
-                winrt::com_ptr<ITrigger> trigger = winrt::make<Stub::TimeTrigger>(m_data);
+                winrt::com_ptr<ITrigger> trigger = winrt::make<Stub::TimeTrigger>(m_data.TimeTrigger);
                 m_triggers.push_back(trigger);
                 trigger.copy_to(ppTrigger);
             }
@@ -664,7 +669,9 @@ TEST(task_test, add_time_trigger)
         .get_Triggers_result = E_FAIL,
         .TriggerCollection = {
             .Create_result = E_FAIL,
-            .ITimeTrigger_put_Id_result = E_FAIL,
+            .TimeTrigger {
+                .put_Id_result = E_FAIL,
+            },
         }
     };
     Task task(make_stub_task_definition(data));
@@ -694,7 +701,7 @@ TEST(task_test, add_time_trigger)
         L"</Task>";
     assert_xml(task, expected);
 
-    data.TriggerCollection.ITimeTrigger_put_Id_result = S_OK;
+    data.TriggerCollection.TimeTrigger.put_Id_result = S_OK;
 
     ASSERT_THROW(task.add_time_trigger(L"Id4", start, end), wil::ResultException);
 
