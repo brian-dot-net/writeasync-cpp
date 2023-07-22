@@ -31,11 +31,16 @@ struct Stub
         HRESULT put_LogonType_result{};
     };
 
+    struct IdleSettingsData
+    {
+        HRESULT put_WaitTimeout_result{};
+    };
+
     struct TaskSettingsData
     {
         HRESULT put_StartWhenAvailable_result{};
         HRESULT get_IdleSettings_result{};
-        HRESULT put_WaitTimeout_result{};
+        IdleSettingsData IdleSettings{};
     };
 
     struct TaskDefinitionData
@@ -153,7 +158,7 @@ struct Stub
     class IdleSettings : public wacpp::test::Stub_IIdleSettings
     {
     public:
-        using Data = TaskSettingsData;
+        using Data = IdleSettingsData;
 
         IdleSettings(const Data& data)
             : m_data(data)
@@ -255,7 +260,7 @@ struct Stub
             const auto hr = m_data.get_IdleSettings_result;
             if (SUCCEEDED(hr))
             {
-                m_idle_settings = winrt::make<Stub::IdleSettings>(m_data);
+                m_idle_settings = winrt::make<Stub::IdleSettings>(m_data.IdleSettings);
                 m_idle_settings.copy_to(ppIdleSettings);
             }
 
@@ -595,7 +600,9 @@ TEST(task_test, set_settings)
         .Settings = {
             .put_StartWhenAvailable_result = E_FAIL,
             .get_IdleSettings_result = E_FAIL,
-            .put_WaitTimeout_result = E_FAIL,
+            .IdleSettings = {
+                .put_WaitTimeout_result = E_FAIL,
+            }
         }
     };
     Task task(make_stub_task_definition(data));
@@ -632,7 +639,7 @@ TEST(task_test, set_settings)
         L"</Task>";
     assert_xml(task, expected);
 
-    data.Settings.put_WaitTimeout_result = S_OK;
+    data.Settings.IdleSettings.put_WaitTimeout_result = S_OK;
 
     task.set_settings(true, 5min);
 
