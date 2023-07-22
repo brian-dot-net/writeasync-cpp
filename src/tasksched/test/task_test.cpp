@@ -462,4 +462,16 @@ TEST(task_test, set_settings)
     assert_xml(task, expected);
 }
 
+TEST(task_test, add_time_trigger)
+{
+    Stub::Data data{};
+    Task task(make_stub_task_definition(data));
+    auto start = make_date_time(2020y / 1 / 2, 3h + 4min + 5s);
+    auto end = make_date_time(2021y / 2 / 3, 4h + 5min + 6s);
+
+    ASSERT_THROW(task.add_time_trigger(L"Id1", start, end), wil::ResultException);
+
+    assert_xml(task, L"<Task></Task>");
+}
+
 }
