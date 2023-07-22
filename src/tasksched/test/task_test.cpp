@@ -445,12 +445,7 @@ struct Stub
             std::wstring xml{};
             xml += L"<Task>";
 
-            if (m_registration_info)
-            {
-                wil::unique_bstr str;
-                THROW_IF_FAILED(m_registration_info->get_XmlText(str.put()));
-                xml += str.get();
-            }
+            xml += get_registration_info_xml();
 
             if (m_principal)
             {
@@ -603,6 +598,18 @@ struct Stub
         CATCH_RETURN()
 
     private:
+        std::wstring get_registration_info_xml()
+        {
+            if (!m_registration_info)
+            {
+                return {};
+            }
+
+            wil::unique_bstr str;
+            THROW_IF_FAILED(m_registration_info->get_XmlText(str.put()));
+            return str.get();
+        }
+
         const Data& m_data;
         winrt::com_ptr<IRegistrationInfo> m_registration_info;
         winrt::com_ptr<IPrincipal> m_principal;
