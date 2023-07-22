@@ -26,13 +26,19 @@ struct Stub
         HRESULT put_Author_result{};
     };
 
+    struct PrincipalData
+    {
+        HRESULT put_LogonType_result{};
+    };
+
     struct TaskDefinitionData
     {
         HRESULT get_RegistrationInfo_result{};
-        RegistrationInfoData RegistrationInfo;
+        RegistrationInfoData RegistrationInfo{};
 
         HRESULT get_Principal_result{};
-        HRESULT put_LogonType{};
+        PrincipalData Principal{};
+
         HRESULT get_Settings_result{};
         HRESULT put_StartWhenAvailable_result{};
         HRESULT get_IdleSettings_result{};
@@ -260,7 +266,7 @@ struct Stub
     class Principal : public wacpp::test::Stub_IPrincipal
     {
     public:
-        using Data = TaskDefinitionData;
+        using Data = PrincipalData;
 
         Principal(const Data& data)
             : m_data(data)
@@ -280,7 +286,7 @@ struct Stub
             TASK_LOGON_TYPE logon) noexcept override
         try
         {
-            const auto hr = m_data.put_LogonType;
+            const auto hr = m_data.put_LogonType_result;
             if (SUCCEEDED(hr))
             {
                 m_logon = logon;
@@ -447,7 +453,7 @@ struct Stub
             const auto hr = m_data.get_Principal_result;
             if (SUCCEEDED(hr))
             {
-                m_principal = winrt::make<Stub::Principal>(m_data);
+                m_principal = winrt::make<Stub::Principal>(m_data.Principal);
                 m_principal.copy_to(ppPrincipal);
             }
 
@@ -549,7 +555,9 @@ TEST(task_test, set_logon_type)
 {
     Stub::TaskDefinitionData data{
         .get_Principal_result = E_FAIL,
-        .put_LogonType = E_FAIL,
+        .Principal {
+            .put_LogonType_result = E_FAIL,
+        }
     };
     Task task(make_stub_task_definition(data));
 
@@ -563,7 +571,7 @@ TEST(task_test, set_logon_type)
 
     assert_xml(task, L"<Task></Task>");
 
-    data.put_LogonType = S_OK;
+    data.Principal.put_LogonType_result = S_OK;
 
     task.set_logon_type(TASK_LOGON_SERVICE_ACCOUNT);
 
