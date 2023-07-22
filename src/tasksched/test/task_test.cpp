@@ -6,6 +6,7 @@
 
 #include "stub_principal.h"
 #include "stub_reginfo.h"
+#include "stub_settings.h"
 #include "stub_taskdef.h"
 #include "task.h"
 
@@ -22,6 +23,18 @@ struct Stub
         HRESULT put_Author_result{};
         HRESULT get_Principal_result{};
         HRESULT put_LogonType{};
+        HRESULT get_Settings_result{};
+    };
+
+    class Settings : public wacpp::test::Stub_ITaskSettings
+    {
+    public:
+        Settings(const Data& data)
+            : m_data(data)
+        {}
+
+    private:
+        const Data& m_data;
     };
 
     class Principal : public wacpp::test::Stub_IPrincipal
@@ -176,10 +189,26 @@ struct Stub
         }
         CATCH_RETURN()
 
+        STDMETHODIMP get_Settings(
+            ITaskSettings** ppSettings) noexcept
+        try
+        {
+            const auto hr = m_data.get_Settings_result;
+            if (SUCCEEDED(hr))
+            {
+                m_settings = winrt::make<Stub::Settings>(m_data);
+                m_settings.copy_to(ppSettings);
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
+
     private:
         const Data& m_data;
         winrt::com_ptr<IRegistrationInfo> m_registration_info;
         winrt::com_ptr<IPrincipal> m_principal;
+        winrt::com_ptr<ITaskSettings> m_settings;
     };
 };
 
@@ -263,8 +292,14 @@ TEST(task_test, set_logon_type)
 
 TEST(task_test, set_settings)
 {
-    Stub::Data data{};
+    Stub::Data data{
+        .get_Settings_result = E_FAIL,
+    };
     Task task(make_stub_task_definition(data));
+
+    ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
+
+    data.get_Settings_result = S_OK;
 
     ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
 
