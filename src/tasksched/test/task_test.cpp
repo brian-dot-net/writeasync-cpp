@@ -4,6 +4,7 @@
 
 #include <wil/com.h>
 
+#include "stub_principal.h"
 #include "stub_reginfo.h"
 #include "stub_taskdef.h"
 #include "task.h"
@@ -17,6 +18,18 @@ struct Stub
     {
         HRESULT get_RegistrationInfo_result{};
         HRESULT put_Author_result{};
+        HRESULT get_Principal_result{};
+    };
+
+    class Principal : public wacpp::test::Stub_IPrincipal
+    {
+    public:
+        Principal(const Data& data)
+            : m_data(data)
+        {}
+
+    private:
+        const Data& m_data;
     };
 
     class RegistrationInfo : public wacpp::test::Stub_IRegistrationInfo
@@ -69,6 +82,7 @@ struct Stub
         TaskDefinition(const Data& data)
             : m_data(data)
             , m_registration_info()
+            , m_principal()
         {}
 
         STDMETHODIMP get_XmlText(
@@ -109,9 +123,25 @@ struct Stub
         }
         CATCH_RETURN()
 
+        STDMETHODIMP get_Principal(
+            IPrincipal** ppPrincipal) noexcept override
+        try
+        {
+            const auto hr = m_data.get_Principal_result;
+            if (SUCCEEDED(hr))
+            {
+                m_principal = winrt::make<Stub::Principal>(m_data);
+                m_principal.copy_to(ppPrincipal);
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
+
     private:
         const Data& m_data;
         winrt::com_ptr<IRegistrationInfo> m_registration_info;
+        winrt::com_ptr<IPrincipal> m_principal;
     };
 };
 
@@ -166,10 +196,18 @@ TEST(task_test, set_author)
 
 TEST(task_test, set_logon_type)
 {
-    Stub::Data data{};
+    Stub::Data data{
+        .get_Principal_result = E_FAIL,
+    };
     Task task(make_stub_task_definition(data));
 
     ASSERT_THROW(task.set_logon_type(TASK_LOGON_PASSWORD), wil::ResultException);
+
+    assert_xml(task, L"<Task></Task>");
+
+    data.get_Principal_result = S_OK;
+
+    ASSERT_THROW(task.set_logon_type(TASK_LOGON_GROUP), wil::ResultException);
 
     assert_xml(task, L"<Task></Task>");
 }
