@@ -19,6 +19,7 @@ struct Stub
         HRESULT get_RegistrationInfo_result{};
         HRESULT put_Author_result{};
         HRESULT get_Principal_result{};
+        HRESULT put_LogonType{};
     };
 
     class Principal : public wacpp::test::Stub_IPrincipal
@@ -26,10 +27,35 @@ struct Stub
     public:
         Principal(const Data& data)
             : m_data(data)
+            , m_logon()
         {}
+
+        STDMETHODIMP get_LogonType(
+            TASK_LOGON_TYPE* pLogon) noexcept override
+        try
+        {
+            *pLogon = m_logon;
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP put_LogonType(
+            TASK_LOGON_TYPE logon) noexcept override
+        try
+        {
+            const auto hr = m_data.put_LogonType;
+            if (SUCCEEDED(hr))
+            {
+                m_logon = logon;
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
 
     private:
         const Data& m_data;
+        TASK_LOGON_TYPE m_logon;
     };
 
     class RegistrationInfo : public wacpp::test::Stub_IRegistrationInfo
@@ -97,6 +123,16 @@ struct Stub
                 wil::unique_bstr str;
                 THROW_IF_FAILED(m_registration_info->get_XmlText(str.put()));
                 xml += str.get();
+            }
+
+            if (m_principal)
+            {
+                TASK_LOGON_TYPE logon{};
+                THROW_IF_FAILED(m_principal->get_LogonType(&logon));
+                if (logon)
+                {
+                    xml += std::format(L"<LogonType>{}</LogonType>", static_cast<int>(logon));
+                }
             }
 
             xml += L"</Task>";
@@ -198,6 +234,7 @@ TEST(task_test, set_logon_type)
 {
     Stub::Data data{
         .get_Principal_result = E_FAIL,
+        .put_LogonType = E_FAIL,
     };
     Task task(make_stub_task_definition(data));
 
@@ -210,6 +247,16 @@ TEST(task_test, set_logon_type)
     ASSERT_THROW(task.set_logon_type(TASK_LOGON_GROUP), wil::ResultException);
 
     assert_xml(task, L"<Task></Task>");
+
+    data.put_LogonType = S_OK;
+
+    task.set_logon_type(TASK_LOGON_SERVICE_ACCOUNT);
+
+    const auto expected =
+        L"<Task>"
+        L"<LogonType>5</LogonType>"
+        L"</Task>";
+    assert_xml(task, expected);
 }
 
 }
