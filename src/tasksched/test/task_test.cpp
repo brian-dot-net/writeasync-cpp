@@ -552,7 +552,11 @@ struct Stub
             const auto hr = m_data.get_Principal_result;
             if (SUCCEEDED(hr))
             {
-                m_principal = winrt::make<Stub::Principal>(m_data.Principal);
+                if (!m_principal)
+                {
+                    m_principal = winrt::make<Stub::Principal>(m_data.Principal);
+                }
+
                 m_principal.copy_to(ppPrincipal);
             }
 
