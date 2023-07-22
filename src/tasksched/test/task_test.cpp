@@ -21,10 +21,16 @@ namespace
 
 struct Stub
 {
+    struct RegistrationInfoData
+    {
+        HRESULT put_Author_result{};
+    };
+
     struct TaskDefinitionData
     {
         HRESULT get_RegistrationInfo_result{};
-        HRESULT put_Author_result{};
+        RegistrationInfoData RegistrationInfo;
+
         HRESULT get_Principal_result{};
         HRESULT put_LogonType{};
         HRESULT get_Settings_result{};
@@ -292,7 +298,7 @@ struct Stub
     class RegistrationInfo : public wacpp::test::Stub_IRegistrationInfo
     {
     public:
-        using Data = TaskDefinitionData;
+        using Data = RegistrationInfoData;
 
         RegistrationInfo(const Data& data)
             : m_data(data)
@@ -426,7 +432,7 @@ struct Stub
             const auto hr = m_data.get_RegistrationInfo_result;
             if (SUCCEEDED(hr))
             {
-                m_registration_info = winrt::make<Stub::RegistrationInfo>(m_data);
+                m_registration_info = winrt::make<Stub::RegistrationInfo>(m_data.RegistrationInfo);
                 m_registration_info.copy_to(ppRegistrationInfo);
             }
 
@@ -512,7 +518,9 @@ TEST(task_test, set_author)
 {
     Stub::TaskDefinitionData data{
         .get_RegistrationInfo_result = E_FAIL,
-        .put_Author_result = E_FAIL,
+        .RegistrationInfo = {
+            .put_Author_result = E_FAIL
+        },
     };
     Task task(make_stub_task_definition(data));
 
@@ -526,7 +534,7 @@ TEST(task_test, set_author)
 
     assert_xml(task, L"<Task></Task>");
 
-    data.put_Author_result = S_OK;
+    data.RegistrationInfo.put_Author_result = S_OK;
 
     task.set_author(L"Some Author");
 
