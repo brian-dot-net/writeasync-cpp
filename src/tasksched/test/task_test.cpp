@@ -882,4 +882,14 @@ TEST(task_test, add_time_trigger)
     assert_xml(task, expected);
 }
 
+TEST(task_test, add_exec_action)
+{
+    Stub::TaskDefinitionData data{};
+    Task task(make_stub_task_definition(data));
+
+    ASSERT_THROW(task.add_exec_action(L"X:\\act.exe"), wil::ResultException);
+
+    assert_xml(task, L"<Task></Task>");
+}
+
 }
