@@ -446,16 +446,7 @@ struct Stub
             xml += L"<Task>";
 
             xml += get_registration_info_xml();
-
-            if (m_principal)
-            {
-                TASK_LOGON_TYPE logon{};
-                THROW_IF_FAILED(m_principal->get_LogonType(&logon));
-                if (logon)
-                {
-                    xml += std::format(L"<LogonType>{}</LogonType>", static_cast<int>(logon));
-                }
-            }
+            xml += get_principal_xml();
 
             if (m_settings)
             {
@@ -608,6 +599,23 @@ struct Stub
             wil::unique_bstr str;
             THROW_IF_FAILED(m_registration_info->get_XmlText(str.put()));
             return str.get();
+        }
+
+        std::wstring get_principal_xml()
+        {
+            if (!m_principal)
+            {
+                return {};
+            }
+
+            TASK_LOGON_TYPE logon{};
+            THROW_IF_FAILED(m_principal->get_LogonType(&logon));
+            if (!logon)
+            {
+                return {};
+            }
+
+            return std::format(L"<LogonType>{}</LogonType>", static_cast<int>(logon));
         }
 
         const Data& m_data;
