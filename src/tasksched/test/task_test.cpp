@@ -47,6 +47,7 @@ struct Stub
     {
         HRESULT put_Id_result{};
         HRESULT put_EndBoundary_result{};
+        HRESULT put_StartBoundary_result{};
     };
 
     struct TriggerCollectionData
@@ -79,6 +80,7 @@ struct Stub
             : m_data(data)
             , m_id()
             , m_end()
+            , m_start()
         {}
 
         STDMETHODIMP get_Id(
@@ -129,10 +131,35 @@ struct Stub
         }
         CATCH_RETURN()
 
+        STDMETHODIMP get_StartBoundary(
+            BSTR* pStart) noexcept override
+        try
+        {
+            auto start = wil::make_bstr(m_start.c_str());
+            *pStart = start.release();
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP put_StartBoundary(
+            BSTR start) noexcept override
+        try
+        {
+            const auto hr = m_data.put_StartBoundary_result;
+            if (SUCCEEDED(hr))
+            {
+                m_start = start;
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
+
     private:
         const Data& m_data;
         std::wstring m_id;
         std::wstring m_end;
+        std::wstring m_start;
     };
 
     class TriggerCollection : public wacpp::test::Stub_ITriggerCollection
@@ -469,6 +496,14 @@ struct Stub
                         inner_xml += std::format(L"<EndBoundary>{}</EndBoundary>", end);
                     }
 
+                    wil::unique_bstr startb{};
+                    THROW_IF_FAILED(time_trigger->get_StartBoundary(startb.put()));
+                    std::wstring start = startb.get();
+                    if (!start.empty())
+                    {
+                        inner_xml += std::format(L"<StartBoundary>{}</StartBoundary>", start);
+                    }
+
                     inner_xml += L"</TimeTrigger>";
                 }
 
@@ -711,6 +746,7 @@ TEST(task_test, add_time_trigger)
             .TimeTrigger {
                 .put_Id_result = E_FAIL,
                 .put_EndBoundary_result = E_FAIL,
+                .put_StartBoundary_result = E_FAIL,
             },
         }
     };
@@ -765,6 +801,28 @@ TEST(task_test, add_time_trigger)
         L"<TimeTrigger>"
         L"<Id>Id5</Id>"
         L"<EndBoundary>2021-02-03T04:05:06</EndBoundary>"
+        L"</TimeTrigger>"
+        L"</Triggers>"
+        L"</Task>";
+    assert_xml(task, expected);
+
+    data.TriggerCollection.TimeTrigger.put_StartBoundary_result = S_OK;
+
+    task.add_time_trigger(L"Id6", start, end);
+
+    expected =
+        L"<Task>"
+        L"<Triggers>"
+        L"<TimeTrigger></TimeTrigger>"
+        L"<TimeTrigger><Id>Id4</Id></TimeTrigger>"
+        L"<TimeTrigger>"
+        L"<Id>Id5</Id>"
+        L"<EndBoundary>2021-02-03T04:05:06</EndBoundary>"
+        L"</TimeTrigger>"
+        L"<TimeTrigger>"
+        L"<Id>Id6</Id>"
+        L"<EndBoundary>2021-02-03T04:05:06</EndBoundary>"
+        L"<StartBoundary>2020-01-02T03:04:05</StartBoundary>"
         L"</TimeTrigger>"
         L"</Triggers>"
         L"</Task>";
