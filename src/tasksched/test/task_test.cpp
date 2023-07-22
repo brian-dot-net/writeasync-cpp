@@ -533,7 +533,11 @@ struct Stub
             const auto hr = m_data.get_RegistrationInfo_result;
             if (SUCCEEDED(hr))
             {
-                m_registration_info = winrt::make<Stub::RegistrationInfo>(m_data.RegistrationInfo);
+                if (!m_registration_info)
+                {
+                    m_registration_info = winrt::make<Stub::RegistrationInfo>(m_data.RegistrationInfo);
+                }
+
                 m_registration_info.copy_to(ppRegistrationInfo);
             }
 
