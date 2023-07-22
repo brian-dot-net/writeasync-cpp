@@ -32,6 +32,7 @@ find_package(GTest REQUIRED)
 
 add_executable(tasksched-test
     "test/date_time_test.cpp"
+    "test/stub_actions.cpp"
     "test/stub_principal.cpp"
     "test/stub_reginfo.cpp"
     "test/stub_settings.cpp"
