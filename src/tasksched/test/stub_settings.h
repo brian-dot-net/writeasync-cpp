@@ -8,6 +8,63 @@
 namespace wacpp::test
 {
 
+class Stub_IIdleSettings : public winrt::implements<Stub_IIdleSettings, IIdleSettings>
+{
+public:
+    // IIdleSettings
+
+    STDMETHODIMP get_IdleDuration(
+        BSTR* pDelay) noexcept override;
+
+    STDMETHODIMP put_IdleDuration(
+        BSTR delay) noexcept override;
+
+    STDMETHODIMP get_WaitTimeout(
+        BSTR* pTimeout) noexcept override;
+
+    STDMETHODIMP put_WaitTimeout(
+        BSTR timeout) noexcept override;
+
+    STDMETHODIMP get_StopOnIdleEnd(
+        VARIANT_BOOL* pStop) noexcept override;
+
+    STDMETHODIMP put_StopOnIdleEnd(
+        VARIANT_BOOL stop) noexcept override;
+
+    STDMETHODIMP get_RestartOnIdle(
+        VARIANT_BOOL* pRestart) noexcept override;
+
+    STDMETHODIMP put_RestartOnIdle(
+        VARIANT_BOOL restart) noexcept override;
+
+    // IDispatch
+
+    STDMETHODIMP GetTypeInfoCount(
+        UINT* pctinfo) noexcept override;
+
+    STDMETHODIMP GetTypeInfo(
+        UINT iTInfo,
+        LCID lcid,
+        ITypeInfo** ppTInfo) noexcept override;
+
+    STDMETHODIMP GetIDsOfNames(
+        REFIID riid,
+        LPOLESTR* rgszNames,
+        UINT cNames,
+        LCID lcid,
+        DISPID* rgDispId) noexcept override;
+
+    STDMETHODIMP Invoke(
+        DISPID dispIdMember,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr) noexcept override;
+};
+
 class Stub_ITaskSettings : public winrt::implements<Stub_ITaskSettings, ITaskSettings>
 {
 public:
