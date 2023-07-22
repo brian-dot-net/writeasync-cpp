@@ -164,4 +164,14 @@ TEST(task_test, set_author)
     assert_xml(task, expected);
 }
 
+TEST(task_test, set_logon_type)
+{
+    Stub::Data data{};
+    Task task(make_stub_task_definition(data));
+
+    ASSERT_THROW(task.set_logon_type(TASK_LOGON_PASSWORD), wil::ResultException);
+
+    assert_xml(task, L"<Task></Task>");
+}
+
 }
