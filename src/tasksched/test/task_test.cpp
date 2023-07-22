@@ -24,6 +24,7 @@ struct Stub
         HRESULT get_Principal_result{};
         HRESULT put_LogonType{};
         HRESULT get_Settings_result{};
+        HRESULT put_StartWhenAvailable_result{};
     };
 
     class Settings : public wacpp::test::Stub_ITaskSettings
@@ -31,10 +32,26 @@ struct Stub
     public:
         Settings(const Data& data)
             : m_data(data)
+            , m_start_when_available()
         {}
+
+        STDMETHODIMP put_StartWhenAvailable(
+            VARIANT_BOOL startWhenAvailable) noexcept override
+        try
+        {
+            const auto hr = m_data.put_StartWhenAvailable_result;
+            if (SUCCEEDED(hr))
+            {
+                m_start_when_available = startWhenAvailable == VARIANT_TRUE;
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
 
     private:
         const Data& m_data;
+        bool m_start_when_available;
     };
 
     class Principal : public wacpp::test::Stub_IPrincipal
@@ -294,12 +311,19 @@ TEST(task_test, set_settings)
 {
     Stub::Data data{
         .get_Settings_result = E_FAIL,
+        .put_StartWhenAvailable_result = E_FAIL,
     };
     Task task(make_stub_task_definition(data));
 
     ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
 
     data.get_Settings_result = S_OK;
+
+    ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
+
+    assert_xml(task, L"<Task></Task>");
+
+    data.put_StartWhenAvailable_result = S_OK;
 
     ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
 
