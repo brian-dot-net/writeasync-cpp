@@ -25,6 +25,18 @@ struct Stub
         HRESULT put_LogonType{};
         HRESULT get_Settings_result{};
         HRESULT put_StartWhenAvailable_result{};
+        HRESULT get_IdleSettings_result{};
+    };
+
+    class IdleSettings : public wacpp::test::Stub_IIdleSettings
+    {
+    public:
+        IdleSettings(const Data& data)
+            : m_data(data)
+        {}
+
+    private:
+        const Data& m_data;
     };
 
     class Settings : public wacpp::test::Stub_ITaskSettings
@@ -33,6 +45,7 @@ struct Stub
         Settings(const Data& data)
             : m_data(data)
             , m_start_when_available()
+            , m_idle_settings()
         {}
 
         STDMETHODIMP put_StartWhenAvailable(
@@ -49,9 +62,25 @@ struct Stub
         }
         CATCH_RETURN()
 
+        STDMETHODIMP get_IdleSettings(
+            IIdleSettings** ppIdleSettings) noexcept override
+        try
+        {
+            const auto hr = m_data.get_IdleSettings_result;
+            if (SUCCEEDED(hr))
+            {
+                m_idle_settings = winrt::make<Stub::IdleSettings>(m_data);
+                m_idle_settings.copy_to(ppIdleSettings);
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
+
     private:
         const Data& m_data;
         bool m_start_when_available;
+        winrt::com_ptr<IIdleSettings> m_idle_settings;
     };
 
     class Principal : public wacpp::test::Stub_IPrincipal
@@ -312,6 +341,7 @@ TEST(task_test, set_settings)
     Stub::Data data{
         .get_Settings_result = E_FAIL,
         .put_StartWhenAvailable_result = E_FAIL,
+        .get_IdleSettings_result = E_FAIL,
     };
     Task task(make_stub_task_definition(data));
 
@@ -324,6 +354,12 @@ TEST(task_test, set_settings)
     assert_xml(task, L"<Task></Task>");
 
     data.put_StartWhenAvailable_result = S_OK;
+
+    ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
+
+    assert_xml(task, L"<Task></Task>");
+
+    data.get_IdleSettings_result = S_OK;
 
     ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
 
