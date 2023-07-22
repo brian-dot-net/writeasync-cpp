@@ -43,6 +43,12 @@ struct Stub
         IdleSettingsData IdleSettings{};
     };
 
+    struct TriggerCollectionData
+    {
+        HRESULT Create_result{};
+        HRESULT ITimeTrigger_put_Id_result{};
+    };
+
     struct TaskDefinitionData
     {
         HRESULT get_RegistrationInfo_result{};
@@ -55,14 +61,13 @@ struct Stub
         TaskSettingsData Settings{};
 
         HRESULT get_Triggers_result{};
-        HRESULT ITriggerCollection_Create_result{};
-        HRESULT ITimeTrigger_put_Id_result{};
+        TriggerCollectionData TriggerCollection{};
     };
 
     class TimeTrigger : public wacpp::test::Stub_ITimeTrigger
     {
     public:
-        using Data = TaskDefinitionData;
+        using Data = TriggerCollectionData;
 
         TimeTrigger(const Data& data)
             : m_data(data)
@@ -101,7 +106,7 @@ struct Stub
     class TriggerCollection : public wacpp::test::Stub_ITriggerCollection
     {
     public:
-        using Data = TaskDefinitionData;
+        using Data = TriggerCollectionData;
 
         TriggerCollection(const Data& data)
             : m_data(data)
@@ -138,7 +143,7 @@ struct Stub
                 return E_NOTIMPL;
             }
 
-            const auto hr = m_data.ITriggerCollection_Create_result;
+            const auto hr = m_data.Create_result;
             if (SUCCEEDED(hr))
             {
                 winrt::com_ptr<ITrigger> trigger = winrt::make<Stub::TimeTrigger>(m_data);
@@ -494,7 +499,7 @@ struct Stub
             const auto hr = m_data.get_Triggers_result;
             if (SUCCEEDED(hr))
             {
-                m_triggers = winrt::make<Stub::TriggerCollection>(m_data);
+                m_triggers = winrt::make<Stub::TriggerCollection>(m_data.TriggerCollection);
                 m_triggers.copy_to(ppTriggers);
             }
 
@@ -657,8 +662,10 @@ TEST(task_test, add_time_trigger)
 {
     Stub::TaskDefinitionData data{
         .get_Triggers_result = E_FAIL,
-        .ITriggerCollection_Create_result = E_FAIL,
-        .ITimeTrigger_put_Id_result = E_FAIL,
+        .TriggerCollection = {
+            .Create_result = E_FAIL,
+            .ITimeTrigger_put_Id_result = E_FAIL,
+        }
     };
     Task task(make_stub_task_definition(data));
     auto start = make_date_time(2020y / 1 / 2, 3h + 4min + 5s);
@@ -674,7 +681,7 @@ TEST(task_test, add_time_trigger)
 
     assert_xml(task, L"<Task></Task>");
 
-    data.ITriggerCollection_Create_result = S_OK;
+    data.TriggerCollection.Create_result = S_OK;
 
     ASSERT_THROW(task.add_time_trigger(L"Id3", start, end), wil::ResultException);
 
@@ -687,7 +694,7 @@ TEST(task_test, add_time_trigger)
         L"</Task>";
     assert_xml(task, expected);
 
-    data.ITimeTrigger_put_Id_result = S_OK;
+    data.TriggerCollection.ITimeTrigger_put_Id_result = S_OK;
 
     ASSERT_THROW(task.add_time_trigger(L"Id4", start, end), wil::ResultException);
 
