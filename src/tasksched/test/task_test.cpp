@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <optional>
+#include <vector>
 
 #include <windows.h>
 
@@ -31,6 +32,18 @@ struct Stub
         HRESULT get_IdleSettings_result{};
         HRESULT put_WaitTimeout_result{};
         HRESULT get_Triggers_result{};
+        HRESULT ITriggerCollection_Create_result{};
+    };
+
+    class TimeTrigger : public wacpp::test::Stub_ITimeTrigger
+    {
+    public:
+        TimeTrigger(const Data& data)
+            : m_data(data)
+        {}
+
+    private:
+        const Data& m_data;
     };
 
     class TriggerCollection : public wacpp::test::Stub_ITriggerCollection
@@ -38,10 +51,54 @@ struct Stub
     public:
         TriggerCollection(const Data& data)
             : m_data(data)
+            , m_triggers()
         {}
+
+        STDMETHODIMP get_Count(
+            long* pCount) noexcept override
+        try
+        {
+            *pCount = static_cast<long>(m_triggers.size());
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP get_Item(
+            long index,
+            ITrigger** ppTrigger) noexcept override
+        try
+        {
+            auto trigger = m_triggers.at(index);
+            trigger.copy_to(ppTrigger);
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP Create(
+            TASK_TRIGGER_TYPE2 type,
+            ITrigger** ppTrigger) noexcept override
+        try
+        {
+            if (type != TASK_TRIGGER_TIME)
+            {
+                return E_NOTIMPL;
+            }
+
+            const auto hr = m_data.ITriggerCollection_Create_result;
+            if (SUCCEEDED(hr))
+            {
+                winrt::com_ptr<ITrigger> trigger = winrt::make<Stub::TimeTrigger>(m_data);
+                m_triggers.push_back(trigger);
+                trigger.copy_to(ppTrigger);
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
 
     private:
         const Data& m_data;
+        std::vector<winrt::com_ptr<ITrigger>> m_triggers;
     };
 
     class IdleSettings : public wacpp::test::Stub_IIdleSettings
@@ -280,6 +337,27 @@ struct Stub
                 xml += str.get();
             }
 
+            if (m_triggers)
+            {
+                long count{};
+                THROW_IF_FAILED(m_triggers->get_Count(&count));
+
+                std::wstring inner_xml{};
+                for (long i = 0; i < count; ++i)
+                {
+                    wil::com_ptr<ITrigger> trigger;
+                    THROW_IF_FAILED(m_triggers->get_Item(i, trigger.put()));
+                    auto time_trigger = trigger.query<ITimeTrigger>();
+                    inner_xml += L"<TimeTrigger>";
+                    inner_xml += L"</TimeTrigger>";
+                }
+
+                if (!inner_xml.empty())
+                {
+                    xml += std::format(L"<Triggers>{}</Triggers>", inner_xml);
+                }
+            }
+
             xml += L"</Task>";
 
             auto outer_xml = wil::make_bstr(xml.c_str());
@@ -496,6 +574,7 @@ TEST(task_test, add_time_trigger)
 {
     Stub::Data data{
         .get_Triggers_result = E_FAIL,
+        .ITriggerCollection_Create_result = E_FAIL,
     };
     Task task(make_stub_task_definition(data));
     auto start = make_date_time(2020y / 1 / 2, 3h + 4min + 5s);
@@ -510,6 +589,19 @@ TEST(task_test, add_time_trigger)
     ASSERT_THROW(task.add_time_trigger(L"Id1", start, end), wil::ResultException);
 
     assert_xml(task, L"<Task></Task>");
+
+    data.ITriggerCollection_Create_result = S_OK;
+
+    ASSERT_THROW(task.add_time_trigger(L"Id1", start, end), wil::ResultException);
+
+    auto expected =
+        L"<Task>"
+        L"<Triggers>"
+        L"<TimeTrigger>"
+        L"</TimeTrigger>"
+        L"</Triggers>"
+        L"</Task>";
+    assert_xml(task, expected);
 }
 
 }
