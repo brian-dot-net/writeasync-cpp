@@ -33,6 +33,7 @@ struct Stub
         HRESULT put_WaitTimeout_result{};
         HRESULT get_Triggers_result{};
         HRESULT ITriggerCollection_Create_result{};
+        HRESULT ITimeTrigger_put_Id_result{};
     };
 
     class TimeTrigger : public wacpp::test::Stub_ITimeTrigger
@@ -40,10 +41,36 @@ struct Stub
     public:
         TimeTrigger(const Data& data)
             : m_data(data)
+            , m_id()
         {}
+
+        STDMETHODIMP get_Id(
+            BSTR* pId) noexcept override
+        try
+        {
+            auto id = wil::make_bstr(m_id.c_str());
+            *pId = id.release();
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP put_Id(
+            BSTR id) noexcept override
+        try
+        {
+            const auto hr = m_data.ITimeTrigger_put_Id_result;
+            if (SUCCEEDED(hr))
+            {
+                m_id = id;
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
 
     private:
         const Data& m_data;
+        std::wstring m_id;
     };
 
     class TriggerCollection : public wacpp::test::Stub_ITriggerCollection
@@ -347,8 +374,19 @@ struct Stub
                 {
                     wil::com_ptr<ITrigger> trigger;
                     THROW_IF_FAILED(m_triggers->get_Item(i, trigger.put()));
+
                     auto time_trigger = trigger.query<ITimeTrigger>();
+
                     inner_xml += L"<TimeTrigger>";
+
+                    wil::unique_bstr idb{};
+                    THROW_IF_FAILED(time_trigger->get_Id(idb.put()));
+                    std::wstring id = idb.get();
+                    if (!id.empty())
+                    {
+                        inner_xml += std::format(L"<Id>{}</Id>", id);
+                    }
+
                     inner_xml += L"</TimeTrigger>";
                 }
 
@@ -575,6 +613,7 @@ TEST(task_test, add_time_trigger)
     Stub::Data data{
         .get_Triggers_result = E_FAIL,
         .ITriggerCollection_Create_result = E_FAIL,
+        .ITimeTrigger_put_Id_result = E_FAIL,
     };
     Task task(make_stub_task_definition(data));
     auto start = make_date_time(2020y / 1 / 2, 3h + 4min + 5s);
@@ -586,19 +625,31 @@ TEST(task_test, add_time_trigger)
 
     data.get_Triggers_result = S_OK;
 
-    ASSERT_THROW(task.add_time_trigger(L"Id1", start, end), wil::ResultException);
+    ASSERT_THROW(task.add_time_trigger(L"Id2", start, end), wil::ResultException);
 
     assert_xml(task, L"<Task></Task>");
 
     data.ITriggerCollection_Create_result = S_OK;
 
-    ASSERT_THROW(task.add_time_trigger(L"Id1", start, end), wil::ResultException);
+    ASSERT_THROW(task.add_time_trigger(L"Id3", start, end), wil::ResultException);
 
     auto expected =
         L"<Task>"
         L"<Triggers>"
         L"<TimeTrigger>"
         L"</TimeTrigger>"
+        L"</Triggers>"
+        L"</Task>";
+    assert_xml(task, expected);
+
+    data.ITimeTrigger_put_Id_result = S_OK;
+
+    ASSERT_THROW(task.add_time_trigger(L"Id4", start, end), wil::ResultException);
+
+    expected =
+        L"<Task>"
+        L"<Triggers>"
+        L"<TimeTrigger><Id>Id4</Id></TimeTrigger>"
         L"</Triggers>"
         L"</Task>";
     assert_xml(task, expected);
