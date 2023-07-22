@@ -448,54 +448,7 @@ struct Stub
             xml += get_registration_info_xml();
             xml += get_principal_xml();
             xml += get_settings_xml();
-
-            if (m_triggers)
-            {
-                long count{};
-                THROW_IF_FAILED(m_triggers->get_Count(&count));
-
-                std::wstring inner_xml{};
-                for (long i = 0; i < count; ++i)
-                {
-                    wil::com_ptr<ITrigger> trigger;
-                    THROW_IF_FAILED(m_triggers->get_Item(i, trigger.put()));
-
-                    auto time_trigger = trigger.query<ITimeTrigger>();
-
-                    inner_xml += L"<TimeTrigger>";
-
-                    wil::unique_bstr idb{};
-                    THROW_IF_FAILED(time_trigger->get_Id(idb.put()));
-                    std::wstring id = idb.get();
-                    if (!id.empty())
-                    {
-                        inner_xml += std::format(L"<Id>{}</Id>", id);
-                    }
-
-                    wil::unique_bstr endb{};
-                    THROW_IF_FAILED(time_trigger->get_EndBoundary(endb.put()));
-                    std::wstring end = endb.get();
-                    if (!end.empty())
-                    {
-                        inner_xml += std::format(L"<EndBoundary>{}</EndBoundary>", end);
-                    }
-
-                    wil::unique_bstr startb{};
-                    THROW_IF_FAILED(time_trigger->get_StartBoundary(startb.put()));
-                    std::wstring start = startb.get();
-                    if (!start.empty())
-                    {
-                        inner_xml += std::format(L"<StartBoundary>{}</StartBoundary>", start);
-                    }
-
-                    inner_xml += L"</TimeTrigger>";
-                }
-
-                if (!inner_xml.empty())
-                {
-                    xml += std::format(L"<Triggers>{}</Triggers>", inner_xml);
-                }
-            }
+            xml += get_triggers_xml();
 
             xml += L"</Task>";
 
@@ -622,6 +575,61 @@ struct Stub
             wil::unique_bstr str;
             THROW_IF_FAILED(m_settings->get_XmlText(str.put()));
             return str.get();
+        }
+
+        std::wstring get_triggers_xml()
+        {
+            if (!m_triggers)
+            {
+                return {};
+            }
+
+            long count{};
+            THROW_IF_FAILED(m_triggers->get_Count(&count));
+
+            std::wstring inner_xml{};
+            for (long i = 0; i < count; ++i)
+            {
+                wil::com_ptr<ITrigger> trigger;
+                THROW_IF_FAILED(m_triggers->get_Item(i, trigger.put()));
+
+                auto time_trigger = trigger.query<ITimeTrigger>();
+
+                inner_xml += L"<TimeTrigger>";
+
+                wil::unique_bstr idb{};
+                THROW_IF_FAILED(time_trigger->get_Id(idb.put()));
+                std::wstring id = idb.get();
+                if (!id.empty())
+                {
+                    inner_xml += std::format(L"<Id>{}</Id>", id);
+                }
+
+                wil::unique_bstr endb{};
+                THROW_IF_FAILED(time_trigger->get_EndBoundary(endb.put()));
+                std::wstring end = endb.get();
+                if (!end.empty())
+                {
+                    inner_xml += std::format(L"<EndBoundary>{}</EndBoundary>", end);
+                }
+
+                wil::unique_bstr startb{};
+                THROW_IF_FAILED(time_trigger->get_StartBoundary(startb.put()));
+                std::wstring start = startb.get();
+                if (!start.empty())
+                {
+                    inner_xml += std::format(L"<StartBoundary>{}</StartBoundary>", start);
+                }
+
+                inner_xml += L"</TimeTrigger>";
+            }
+
+            if (inner_xml.empty())
+            {
+                return {};
+            }
+
+            return std::format(L"<Triggers>{}</Triggers>", inner_xml);
         }
 
         const Data& m_data;
