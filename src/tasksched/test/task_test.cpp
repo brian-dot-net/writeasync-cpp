@@ -447,13 +447,7 @@ struct Stub
 
             xml += get_registration_info_xml();
             xml += get_principal_xml();
-
-            if (m_settings)
-            {
-                wil::unique_bstr str;
-                THROW_IF_FAILED(m_settings->get_XmlText(str.put()));
-                xml += str.get();
-            }
+            xml += get_settings_xml();
 
             if (m_triggers)
             {
@@ -616,6 +610,18 @@ struct Stub
             }
 
             return std::format(L"<LogonType>{}</LogonType>", static_cast<int>(logon));
+        }
+
+        std::wstring get_settings_xml()
+        {
+            if (!m_settings)
+            {
+                return {};
+            }
+
+            wil::unique_bstr str;
+            THROW_IF_FAILED(m_settings->get_XmlText(str.put()));
+            return str.get();
         }
 
         const Data& m_data;
