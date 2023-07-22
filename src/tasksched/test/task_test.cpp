@@ -559,7 +559,11 @@ struct Stub
             const auto hr = m_data.get_Settings_result;
             if (SUCCEEDED(hr))
             {
-                m_settings = winrt::make<Stub::TaskSettings>(m_data.Settings);
+                if (!m_settings)
+                {
+                    m_settings = winrt::make<Stub::TaskSettings>(m_data.Settings);
+                }
+
                 m_settings.copy_to(ppSettings);
             }
 
