@@ -9,6 +9,8 @@
 #include "stub_taskdef.h"
 #include "task.h"
 
+using namespace std::chrono_literals;
+
 namespace
 {
 
@@ -257,6 +259,16 @@ TEST(task_test, set_logon_type)
         L"<LogonType>5</LogonType>"
         L"</Task>";
     assert_xml(task, expected);
+}
+
+TEST(task_test, set_settings)
+{
+    Stub::Data data{};
+    Task task(make_stub_task_definition(data));
+
+    ASSERT_THROW(task.set_settings(false, 1min), wil::ResultException);
+
+    assert_xml(task, L"<Task></Task>");
 }
 
 }
