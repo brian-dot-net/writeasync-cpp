@@ -15,9 +15,10 @@ public:
 
     Task create_task();
 
-private:
-    TaskService(wil::com_ptr<ITaskService> service) noexcept;
+protected:
+    TaskService(wil::com_ptr<ITaskService> service);
 
+private:
     wil::com_ptr<ITaskService> m_service;
 };
 

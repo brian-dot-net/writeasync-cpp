@@ -5,9 +5,7 @@ namespace wacpp
 
 TaskService TaskService::connect()
 {
-    TaskService service(wil::CoCreateInstance<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER));
-    THROW_IF_FAILED_MSG(service.m_service->Connect({}, {}, {}, {}), "ITaskService::Connect failed");
-    return service;
+    return TaskService(wil::CoCreateInstance<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER));
 }
 
 TaskFolder TaskService::get_root_folder()
@@ -25,8 +23,10 @@ Task TaskService::create_task()
     return Task(std::move(pTask));
 }
 
-TaskService::TaskService(wil::com_ptr<ITaskService> service) noexcept
+TaskService::TaskService(wil::com_ptr<ITaskService> service)
     : m_service(std::move(service))
-{}
+{
+    THROW_IF_FAILED_MSG(m_service->Connect({}, {}, {}, {}), "ITaskService::Connect failed");
+}
 
 }
