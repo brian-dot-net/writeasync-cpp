@@ -40,6 +40,7 @@ add_executable(tasksched-test
     "test/stub_taskdef.cpp"
     "test/stub_taskfolder.cpp"
     "test/stub_triggers.cpp"
+    "test/task_folder_test.cpp"
     "test/task_test.cpp"
 )
 
