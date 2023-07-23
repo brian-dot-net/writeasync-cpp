@@ -36,6 +36,7 @@ add_executable(tasksched-test
     "test/stub_actions.cpp"
     "test/stub_principal.cpp"
     "test/stub_reginfo.cpp"
+    "test/stub_regtask.cpp"
     "test/stub_settings.cpp"
     "test/stub_taskdef.cpp"
     "test/stub_taskfolder.cpp"
