@@ -1,6 +1,7 @@
 add_library(tasksched-core
     "lib/date_time.cpp"
     "lib/task.cpp"
+    "lib/task_folder.cpp"
 )
 
 target_compile_features(tasksched-core PUBLIC cxx_std_20)

@@ -5,6 +5,7 @@
 #include <wil/win32_helpers.h>
 
 #include "date_time.h"
+#include "task_folder.h"
 #include "task.h"
 
 using namespace wacpp;
@@ -47,33 +48,6 @@ auto get_executable_path()
     wstrExecutablePath += L"\\SYSTEM32\\NOTEPAD.EXE";
     return wstrExecutablePath;
 }
-
-class TaskFolder
-{
-public:
-    TaskFolder(wil::com_ptr<ITaskFolder> folder)
-        : m_folder(std::move(folder))
-    {}
-
-    void save(Task& task, LPCWSTR name)
-    {
-        auto value = wil::make_bstr(name);
-        wil::com_ptr<IRegisteredTask> pRegisteredTask;
-        THROW_IF_FAILED_MSG(m_folder->RegisterTaskDefinition(
-            value.get(),
-            &task.get(),
-            TASK_CREATE_OR_UPDATE,
-            {},
-            {},
-            TASK_LOGON_INTERACTIVE_TOKEN,
-            {},
-            pRegisteredTask.put()),
-            "Error saving the Task");
-    }
-
-private:
-    wil::com_ptr<ITaskFolder> m_folder;
-};
 
 class TaskService
 {
