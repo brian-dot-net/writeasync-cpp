@@ -59,6 +59,7 @@ struct Stub
 
     struct ExecActionData
     {
+        HRESULT put_Path_result{};
     };
 
     struct ActionCollectionData
@@ -92,10 +93,36 @@ struct Stub
 
         ExecAction(const Data& data)
             : m_data(data)
+            , m_path()
         {}
+
+        STDMETHODIMP get_Path(
+            BSTR* pPath) noexcept override
+        try
+        {
+            auto path = wil::make_bstr(m_path.c_str());
+            *pPath = path.release();
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+        STDMETHODIMP put_Path(
+            BSTR path) noexcept override
+        try
+        {
+            const auto hr = m_data.put_Path_result;
+            if (SUCCEEDED(hr))
+            {
+                m_path = path;
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
 
     private:
         const Data& m_data;
+        std::wstring m_path;
     };
 
     class ActionCollection : public wacpp::test::Stub_IActionCollection
@@ -153,13 +180,20 @@ struct Stub
         CATCH_RETURN()
 
     private:
-        std::wstring get_action_xml([[maybe_unused]] IExecAction& action)
+        std::wstring get_action_xml(IExecAction& action)
         {
             std::wstring xml{};
-
             xml += L"<ExecAction>";
-            xml += L"</ExecAction>";
 
+            wil::unique_bstr pathb;
+            THROW_IF_FAILED(action.get_Path(pathb.put()));
+            std::wstring path = pathb.get();
+            if (!path.empty())
+            {
+                xml += std::format(L"<Path>{}</Path>", path);
+            }
+
+            xml += L"</ExecAction>";
             return xml;
         }
 
@@ -1018,7 +1052,10 @@ TEST(task_test, add_exec_action)
         .get_Actions_result = E_FAIL,
         .ActionCollection = {
             .Create_result = E_FAIL,
-        }
+            .ExecAction = {
+                .put_Path_result = E_FAIL,
+            }
+        },
     };
     Task task(make_stub_task_definition(data));
 
@@ -1043,6 +1080,19 @@ TEST(task_test, add_exec_action)
         L"<Task>"
         L"<Actions>"
         L"<ExecAction></ExecAction>"
+        L"</Actions>"
+        L"</Task>";
+    assert_xml(task, expected);
+
+    data.ActionCollection.ExecAction.put_Path_result = S_OK;
+
+    task.add_exec_action(L"X:\\act4.exe");
+
+    expected =
+        L"<Task>"
+        L"<Actions>"
+        L"<ExecAction></ExecAction>"
+        L"<ExecAction><Path>X:\\act4.exe</Path></ExecAction>"
         L"</Actions>"
         L"</Task>";
     assert_xml(task, expected);
