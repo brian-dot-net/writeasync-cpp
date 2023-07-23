@@ -57,8 +57,14 @@ struct Stub
         TimeTriggerData TimeTrigger{};
     };
 
+    struct ExecActionData
+    {
+    };
+
     struct ActionCollectionData
     {
+        HRESULT Create_result{};
+        ExecActionData ExecAction{};
     };
 
     struct TaskDefinitionData
@@ -79,6 +85,19 @@ struct Stub
         ActionCollectionData ActionCollection{};
     };
 
+    class ExecAction : public wacpp::test::Stub_IExecAction
+    {
+    public:
+        using Data = ExecActionData;
+
+        ExecAction(const Data& data)
+            : m_data(data)
+        {}
+
+    private:
+        const Data& m_data;
+    };
+
     class ActionCollection : public wacpp::test::Stub_IActionCollection
     {
     public:
@@ -89,27 +108,61 @@ struct Stub
             , m_actions()
         {}
 
-        STDMETHODIMP get_Count(
-            long* pCount) noexcept override
+        STDMETHODIMP get_XmlText(
+            BSTR* pXml) noexcept override
             try
         {
-            *pCount = static_cast<long>(m_actions.size());
+            std::wstring xml{};
+            xml += L"<Actions>";
+
+            for (auto& action : m_actions)
+            {
+                auto exec_action = action.as<IExecAction>();
+                xml += get_action_xml(*exec_action);
+            }
+
+            xml += L"</Actions>";
+
+            auto outer_xml = wil::make_bstr(xml.c_str());
+            *pXml = outer_xml.release();
+
             return S_OK;
         }
         CATCH_RETURN()
 
-        STDMETHODIMP get_Item(
-            long index,
+        STDMETHODIMP Create(
+            TASK_ACTION_TYPE type,
             IAction** ppAction) noexcept override
         try
         {
-            auto trigger = m_actions.at(index);
-            trigger.copy_to(ppAction);
-            return S_OK;
+            if (type != TASK_ACTION_EXEC)
+            {
+                return E_NOTIMPL;
+            }
+
+            const auto hr = m_data.Create_result;
+            if (SUCCEEDED(hr))
+            {
+                winrt::com_ptr<IAction> action = winrt::make<Stub::ExecAction>(m_data.ExecAction);
+                m_actions.push_back(action);
+                action.copy_to(ppAction);
+            }
+
+            return hr;
         }
         CATCH_RETURN()
 
     private:
+        std::wstring get_action_xml([[maybe_unused]] IExecAction& action)
+        {
+            std::wstring xml{};
+
+            xml += L"<ExecAction>";
+            xml += L"</ExecAction>";
+
+            return xml;
+        }
+
         const Data& m_data;
         std::vector<winrt::com_ptr<IAction>> m_actions;
     };
@@ -493,6 +546,7 @@ struct Stub
             xml += get_principal_xml();
             xml += get_settings_xml();
             xml += get_triggers_xml();
+            xml += get_actions_xml();
 
             xml += L"</Task>";
 
@@ -701,6 +755,18 @@ struct Stub
 
             xml += L"</TimeTrigger>";
             return xml;
+        }
+
+        std::wstring get_actions_xml()
+        {
+            if (!m_actions)
+            {
+                return {};
+            }
+
+            wil::unique_bstr str;
+            THROW_IF_FAILED(m_actions->get_XmlText(str.put()));
+            return str.get();
         }
 
         const Data& m_data;
@@ -950,6 +1016,9 @@ TEST(task_test, add_exec_action)
 {
     Stub::TaskDefinitionData data{
         .get_Actions_result = E_FAIL,
+        .ActionCollection = {
+            .Create_result = E_FAIL,
+        }
     };
     Task task(make_stub_task_definition(data));
 
@@ -959,7 +1028,24 @@ TEST(task_test, add_exec_action)
 
     ASSERT_THROW(task.add_exec_action(L"X:\\act2.exe"), wil::ResultException);
 
-    assert_xml(task, L"<Task></Task>");
+    auto expected =
+        L"<Task>"
+        L"<Actions>"
+        L"</Actions>"
+        L"</Task>";
+    assert_xml(task, expected);
+
+    data.ActionCollection.Create_result = S_OK;
+
+    ASSERT_THROW(task.add_exec_action(L"X:\\act3.exe"), wil::ResultException);
+
+    expected =
+        L"<Task>"
+        L"<Actions>"
+        L"<ExecAction></ExecAction>"
+        L"</Actions>"
+        L"</Task>";
+    assert_xml(task, expected);
 }
 
 }
