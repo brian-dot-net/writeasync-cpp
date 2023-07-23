@@ -4,9 +4,7 @@
 
 #include <wil/win32_helpers.h>
 
-#include "date_time.h"
-#include "task_folder.h"
-#include "task.h"
+#include "task_service.h"
 
 using namespace wacpp;
 using namespace std::chrono_literals;
@@ -48,39 +46,6 @@ auto get_executable_path()
     wstrExecutablePath += L"\\SYSTEM32\\NOTEPAD.EXE";
     return wstrExecutablePath;
 }
-
-class TaskService
-{
-public:
-    static auto connect()
-    {
-        TaskService service(wil::CoCreateInstance<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER));
-        THROW_IF_FAILED_MSG(service.m_service->Connect({}, {}, {}, {}), "ITaskService::Connect failed");
-        return service;
-    }
-
-    auto get_root_folder()
-    {
-        wil::com_ptr<ITaskFolder> pRootFolder;
-        auto path = wil::make_bstr(L"\\");
-        THROW_IF_FAILED_MSG(m_service->GetFolder(path.get(), pRootFolder.put()), "Cannot get Root folder pointer");
-        return TaskFolder(std::move(pRootFolder));
-    }
-
-    auto create_task()
-    {
-        wil::com_ptr<ITaskDefinition> pTask;
-        THROW_IF_FAILED_MSG(m_service->NewTask(0, pTask.put()), "Failed to create a new task definition");
-        return Task(std::move(pTask));
-    }
-
-private:
-    TaskService(wil::com_ptr<ITaskService> service)
-        : m_service(std::move(service))
-    {}
-
-    wil::com_ptr<ITaskService> m_service;
-};
 
 void run()
 {
