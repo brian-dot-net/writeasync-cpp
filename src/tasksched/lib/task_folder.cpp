@@ -3,9 +3,14 @@
 namespace wacpp
 {
 
-TaskFolder::TaskFolder(wil::com_ptr<ITaskFolder> folder)
+TaskFolder::TaskFolder(wil::com_ptr<ITaskFolder> folder) noexcept
     : m_folder(std::move(folder))
 {}
+
+ITaskFolder& TaskFolder::get() noexcept
+{
+    return *m_folder;
+}
 
 void TaskFolder::save_definition(ITaskDefinition& task, LPCWSTR name)
 {

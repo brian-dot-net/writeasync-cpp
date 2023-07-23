@@ -11,7 +11,9 @@ namespace wacpp
 class TaskFolder
 {
 public:
-    TaskFolder(wil::com_ptr<ITaskFolder> folder);
+    TaskFolder(wil::com_ptr<ITaskFolder> folder) noexcept;
+
+    ITaskFolder& get() noexcept;
 
     template <typename Task>
     void save(Task& task, LPCWSTR name)
