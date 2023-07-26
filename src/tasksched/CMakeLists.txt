@@ -44,6 +44,7 @@ add_executable(tasksched-test
     "test/stub_tasksvc.cpp"
     "test/stub_triggers.cpp"
     "test/task_folder_test.cpp"
+    "test/task_service_test.cpp"
     "test/task_test.cpp"
 )
 
@@ -51,6 +52,7 @@ target_compile_features(tasksched-test PUBLIC cxx_std_20)
 
 target_link_libraries(tasksched-test
     tasksched-core
+    taskschd.lib
     GTest::gtest
     GTest::gtest_main
     WIL::WIL
