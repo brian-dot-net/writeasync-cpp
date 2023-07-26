@@ -11,6 +11,8 @@ class TaskService
 public:
     static TaskService connect();
 
+    ITaskService& get();
+
     TaskFolder get_root_folder();
 
     Task create_task();

@@ -8,6 +8,11 @@ TaskService TaskService::connect()
     return TaskService(wil::CoCreateInstance<ITaskService>(CLSID_TaskScheduler, CLSCTX_INPROC_SERVER));
 }
 
+ITaskService& TaskService::get()
+{
+    return *m_service;
+}
+
 TaskFolder TaskService::get_root_folder()
 {
     wil::com_ptr<ITaskFolder> pRootFolder;
