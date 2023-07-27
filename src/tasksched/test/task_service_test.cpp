@@ -5,6 +5,7 @@
 #include <wil/com.h>
 
 #include "stub_tasksvc.h"
+#include "stub_taskdef.h"
 #include "stub_taskfolder.h"
 #include "task_service.h"
 
@@ -17,6 +18,32 @@ struct Stub
     {
         HRESULT Connect_result{};
         HRESULT GetFolder_result{};
+        HRESULT NewTask_result{};
+    };
+
+    class ComTaskDefinition : public wacpp::test::Stub_ITaskDefinition
+    {
+    public:
+        ComTaskDefinition(DWORD flags)
+            : m_flags(flags)
+        {
+        }
+
+        STDMETHODIMP get_XmlText(
+            BSTR* pXml) noexcept override
+        try
+        {
+            std::wstring xml{};
+            xml += std::format(L"<Flags>{}</Flags>", m_flags);
+
+            auto outer_xml = wil::make_bstr(xml.c_str());
+            *pXml = outer_xml.release();
+            return S_OK;
+        }
+        CATCH_RETURN()
+
+    private:
+        DWORD m_flags;
     };
 
     class ComTaskFolder : public wacpp::test::Stub_ITaskFolder
@@ -90,6 +117,22 @@ struct Stub
         }
         CATCH_RETURN()
 
+        STDMETHODIMP NewTask(
+            DWORD flags,
+            ITaskDefinition** ppDefinition) noexcept override
+        try
+        {
+            const auto hr = m_data.NewTask_result;
+            if (SUCCEEDED(hr))
+            {
+                auto definition = winrt::make<ComTaskDefinition>(flags);
+                definition.copy_to(ppDefinition);
+            }
+
+            return hr;
+        }
+        CATCH_RETURN()
+
     private:
         const Data& m_data;
         bool m_connected;
@@ -126,6 +169,15 @@ void assert_path(wacpp::TaskFolder& folder, const std::wstring& expected)
     ASSERT_EQ(expected, actual);
 }
 
+void assert_xml(wacpp::Task& task, const std::wstring& expected)
+{
+    wil::unique_bstr str{};
+    THROW_IF_FAILED(task.get().get_XmlText(str.put()));
+    std::wstring actual = str.get();
+
+    ASSERT_EQ(expected, actual);
+}
+
 }
 
 namespace wacpp::test
@@ -136,6 +188,7 @@ TEST(task_service_test, basic_test)
     Stub::TaskServiceData data{
         .Connect_result = E_FAIL,
         .GetFolder_result = E_FAIL,
+        .NewTask_result = E_FAIL,
     };
 
     ASSERT_THROW(make_stub_task_service(data), wil::ResultException);
@@ -151,6 +204,13 @@ TEST(task_service_test, basic_test)
 
     auto folder = service.get_root_folder();
     assert_path(folder, L"\\");
+
+    ASSERT_THROW(service.create_task(), wil::ResultException);
+
+    data.NewTask_result = S_OK;
+
+    auto task = service.create_task();
+    assert_xml(task, L"<Flags>0</Flags>");
 }
 
 }
