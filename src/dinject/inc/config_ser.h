@@ -15,14 +15,16 @@ public:
 class ConfigIniSerializer final : public ISerializer<Config>
 {
 public:
-    ConfigIniSerializer(RefOrUPtr<ISerializer<ConfigSection>>&& inner) noexcept;
+    ConfigIniSerializer(RefOrPtr<ISerializer<ConfigSection>>&& inner) noexcept;
 
     void serialize(const Config& value, std::ostream& out) final;
 
 private:
-    RefOrUPtr<ISerializer<ConfigSection>> m_inner;
+    RefOrPtr<ISerializer<ConfigSection>> m_inner;
 };
 
-std::unique_ptr<ISerializer<ConfigSection>> make_config_section_ini_serializer();
+std::unique_ptr<ISerializer<ConfigSection>> make_config_section_ini_serializer_u();
+
+std::shared_ptr<ISerializer<ConfigSection>> make_config_section_ini_serializer_s();
 
 }

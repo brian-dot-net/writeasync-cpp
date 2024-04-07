@@ -17,13 +17,16 @@ public:
 };
 
 template <typename T>
-class RefOrUPtr
+class RefOrPtr
 {
 public:
-    RefOrUPtr(T& ref) noexcept : m_value{ &ref }
+    RefOrPtr(T& ref) noexcept : m_value{ &ref }
     {}
 
-    RefOrUPtr(std::unique_ptr<T> p) noexcept : m_value{ std::move(p) }
+    RefOrPtr(std::shared_ptr<T> p) noexcept : m_value{ std::move(p) }
+    {}
+
+    RefOrPtr(std::unique_ptr<T> p) noexcept : m_value{ std::move(p) }
     {}
 
     T* operator->()
@@ -32,6 +35,10 @@ public:
         {
             return std::get<T*>(m_value);
         }
+        else if (std::holds_alternative<std::shared_ptr<T>>(m_value))
+        {
+            return std::get<std::shared_ptr<T>>(m_value).get();
+        }
         else
         {
             return std::get<std::unique_ptr<T>>(m_value).get();
@@ -39,7 +46,7 @@ public:
     }
 
 private:
-    std::variant<T*, std::unique_ptr<T>> m_value;
+    std::variant<T*, std::shared_ptr<T>, std::unique_ptr<T>> m_value;
 };
 
 }

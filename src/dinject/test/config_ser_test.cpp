@@ -7,7 +7,7 @@
 namespace
 {
 
-void serialize_ini_config(wacpp::RefOrUPtr<wacpp::ISerializer<wacpp::ConfigSection>>&& inner_ser)
+void serialize_ini_config(wacpp::RefOrPtr<wacpp::ISerializer<wacpp::ConfigSection>>&& inner_ser)
 {
     wacpp::ConfigIniSerializer ser{ std::move(inner_ser) };
     wacpp::Config c{};
@@ -51,7 +51,12 @@ TEST(config_ser_test, serialize_ini_config_ref)
 
 TEST(config_ser_test, serialize_ini_config_uptr)
 {
-    serialize_ini_config(make_config_section_ini_serializer());
+    serialize_ini_config(make_config_section_ini_serializer_u());
+}
+
+TEST(config_ser_test, serialize_ini_config_sptr)
+{
+    serialize_ini_config(make_config_section_ini_serializer_s());
 }
 
 }

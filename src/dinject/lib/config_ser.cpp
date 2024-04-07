@@ -12,10 +12,10 @@ void ConfigSectionIniSerializer::serialize(const ConfigSection& value, std::ostr
     }
 }
 
-ConfigIniSerializer::ConfigIniSerializer(RefOrUPtr<ISerializer<ConfigSection>>&& inner) noexcept : m_inner{ std::move(inner) }
+ConfigIniSerializer::ConfigIniSerializer(RefOrPtr<ISerializer<ConfigSection>>&& inner) noexcept : m_inner{ std::move(inner) }
 {}
 
-void ConfigIniSerializer::serialize([[maybe_unused]] const Config& value, [[maybe_unused]] std::ostream& out)
+void ConfigIniSerializer::serialize(const Config& value, std::ostream& out)
 {
     for (const auto& s : value)
     {
@@ -24,9 +24,14 @@ void ConfigIniSerializer::serialize([[maybe_unused]] const Config& value, [[mayb
     }
 }
 
-std::unique_ptr<ISerializer<ConfigSection>> make_config_section_ini_serializer()
+std::unique_ptr<ISerializer<ConfigSection>> make_config_section_ini_serializer_u()
 {
     return std::make_unique<ConfigSectionIniSerializer>();
+}
+
+std::shared_ptr<ISerializer<ConfigSection>> make_config_section_ini_serializer_s()
+{
+    return std::make_shared<ConfigSectionIniSerializer>();
 }
 
 }
