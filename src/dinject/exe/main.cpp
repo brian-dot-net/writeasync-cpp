@@ -1,12 +1,16 @@
 #include <iostream>
 
-#include "todo.h"
+#include "config.h"
 
 int main()
 {
     using namespace wacpp;
 
-    Todo todo{};
-    std::cout << "Hello, " << todo.hello() << "!\n";
+    Config c{};
+    for (const auto& [name, _] : c)
+    {
+        std::cout << name << "\n";
+    }
+
     return 0;
 }

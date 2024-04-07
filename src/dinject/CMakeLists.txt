@@ -1,5 +1,5 @@
 add_library(dinject-core
-    "lib/todo.cpp"
+    "lib/config.cpp"
 )
 
 target_compile_features(dinject-core PUBLIC cxx_std_20)
@@ -22,7 +22,7 @@ target_link_libraries(dinject-app
 find_package(GTest REQUIRED)
 
 add_executable(dinject-test
-    "test/todo_test.cpp"
+    "test/config_test.cpp"
 )
 
 target_compile_features(dinject-test PUBLIC cxx_std_20)
