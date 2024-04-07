@@ -1,5 +1,6 @@
 add_library(dinject-core
     "lib/config.cpp"
+    "lib/config_ser.cpp"
 )
 
 target_compile_features(dinject-core PUBLIC cxx_std_20)
@@ -22,6 +23,7 @@ target_link_libraries(dinject-app
 find_package(GTest REQUIRED)
 
 add_executable(dinject-test
+    "test/config_ser_test.cpp"
     "test/config_test.cpp"
 )
 
