@@ -12,7 +12,7 @@ void ConfigSectionIniSerializer::serialize(const ConfigSection& value, std::ostr
     }
 }
 
-ConfigIniSerializer::ConfigIniSerializer() noexcept : m_inner{}
+ConfigIniSerializer::ConfigIniSerializer(ISerializer<ConfigSection>& inner) noexcept : m_inner{ inner }
 {}
 
 void ConfigIniSerializer::serialize([[maybe_unused]] const Config& value, [[maybe_unused]] std::ostream& out)

@@ -20,9 +20,10 @@ TEST(config_ser_test, serialize_ini_section)
     ASSERT_EQ("[S1]\nK1=V1\nK2=V2", ss.str());
 }
 
-TEST(config_ser_test, serialize_ini_config)
+TEST(config_ser_test, serialize_ini_config_ref)
 {
-    ConfigIniSerializer ser{};
+    ConfigSectionIniSerializer inner_ser{};
+    ConfigIniSerializer ser{inner_ser};
     Config c{};
     ConfigSection s1{ "S1" };
     s1.insert("K1", "V1");

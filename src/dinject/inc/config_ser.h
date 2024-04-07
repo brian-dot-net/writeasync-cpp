@@ -15,12 +15,12 @@ public:
 class ConfigIniSerializer final : public ISerializer<Config>
 {
 public:
-    ConfigIniSerializer() noexcept;
+    ConfigIniSerializer(ISerializer<ConfigSection>& inner) noexcept;
 
     void serialize(const Config& value, std::ostream& out) final;
 
 private:
-    ConfigSectionIniSerializer m_inner;
+    ISerializer<ConfigSection>& m_inner;
 };
 
 }
