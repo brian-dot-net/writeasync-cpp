@@ -36,3 +36,17 @@ target_link_libraries(stassert-test
 )
 
 gtest_discover_tests(stassert-test)
+
+function(add_stassert_test symbol err_pattern)
+    set(test_script "${CMAKE_CURRENT_SOURCE_DIR}/test/Test-StaticAssert.ps1")
+    string(CONCAT test_script_args
+        " -Symbol ${symbol}"
+        " -Pattern \"${err_pattern}\""
+        " -WorkingDirectory ${CMAKE_BINARY_DIR}"
+    )
+    add_custom_command(TARGET stassert-test POST_BUILD
+        COMMAND pwsh ${test_script} ${test_script_args}
+    )
+endfunction()
+
+add_stassert_test(STASSERT_NAME_HAS_WRONG_TYPE "Type must have 'name' field of type `const char\\*`")

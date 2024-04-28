@@ -26,4 +26,18 @@ TEST(example_test, has_null_name)
     ASSERT_EQ("Hello, <null>!", hello());
 }
 
+#ifdef STASSERT_NAME_HAS_WRONG_TYPE
+struct WrongType
+{
+    std::string name{};
+};
+
+TEST(example_test, name_has_wrong_type)
+{
+    WrongType val{};
+
+    Example<WrongType> hello{ val };
+}
+#endif
+
 }
