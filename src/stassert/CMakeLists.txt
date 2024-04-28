@@ -1,5 +1,7 @@
+set(CMAKE_EXPORT_COMPILE_COMMANDS true)
+
 add_library(stassert-core
-    "lib/todo.cpp"
+    "lib/example.cpp"
 )
 
 target_compile_features(stassert-core PUBLIC cxx_std_20)
@@ -22,7 +24,7 @@ target_link_libraries(stassert-app
 find_package(GTest REQUIRED)
 
 add_executable(stassert-test
-    "test/todo_test.cpp"
+    "test/stassert_test.cpp"
 )
 
 target_compile_features(stassert-test PUBLIC cxx_std_20)
