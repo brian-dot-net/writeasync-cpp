@@ -40,4 +40,19 @@ TEST(example_test, name_has_wrong_type)
 }
 #endif
 
+#ifdef STASSERT_NAME_HAS_WRONG_SIZE
+struct WrongSize
+{
+    const char* name{};
+    const char* extra{};
+};
+
+TEST(example_test, name_has_wrong_size)
+{
+    WrongSize val{};
+
+    Example<WrongSize> hello{ val };
+}
+#endif
+
 }

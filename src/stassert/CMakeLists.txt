@@ -50,3 +50,4 @@ function(add_stassert_test symbol err_pattern)
 endfunction()
 
 add_stassert_test(STASSERT_NAME_HAS_WRONG_TYPE "Type must have 'name' field of type `const char\\*`")
+add_stassert_test(STASSERT_NAME_HAS_WRONG_SIZE "Type must not have size of 16")

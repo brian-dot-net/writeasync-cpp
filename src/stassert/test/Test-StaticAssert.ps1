@@ -35,7 +35,7 @@ $command += " /D$Symbol"
 Write-Host "Invoking compilation command: $command"
 $output = Invoke-Expression $command
 if ($LASTEXITCODE -eq 0) {
-	throw "Compilation unexpectedly succeeded"
+	throw "Compilation unexpectedly succeeded for '$Symbol'"
 }
 
 Write-Host "Output: $output"
@@ -43,9 +43,9 @@ Write-Host "Output: $output"
 $matched = $false
 $output | Select-String -Pattern $Pattern | ForEach-Object {
 	$matched = $true
-	Write-Host "Found matching output line: $_"
+	Write-Host "Found matching output line for '$Symbol': $_"
 }
 
 if (!$matched) {
-	throw "Did not find output line matching '$Pattern'"
+	throw "Did not find output line for '$Symbol' matching '$Pattern'"
 }
