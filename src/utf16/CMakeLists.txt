@@ -1,5 +1,5 @@
 add_library(utf16-core
-    "lib/todo.cpp"
+    "lib/str.cpp"
 )
 
 target_compile_features(utf16-core PUBLIC cxx_std_20)
@@ -32,7 +32,7 @@ target_link_libraries(utf16-app
 find_package(GTest REQUIRED)
 
 add_executable(utf16-test
-    "test/todo_test.cpp"
+    "test/str_test.cpp"
 )
 
 target_compile_features(utf16-test PUBLIC cxx_std_20)
@@ -50,7 +50,7 @@ gtest_discover_tests(utf16-test)
 find_package(benchmark REQUIRED)
 
 add_executable(utf16-perf
-    "perf/todo_perf.cpp"
+    "perf/str_perf.cpp"
 )
 
 target_compile_features(utf16-perf PUBLIC cxx_std_20)
