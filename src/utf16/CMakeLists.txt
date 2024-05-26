@@ -46,3 +46,19 @@ target_link_libraries(utf16-test
 )
 
 gtest_discover_tests(utf16-test)
+
+find_package(benchmark REQUIRED)
+
+add_executable(utf16-perf
+    "perf/todo_perf.cpp"
+)
+
+target_compile_features(utf16-perf PUBLIC cxx_std_20)
+
+target_link_libraries(utf16-perf
+    utf16-core
+    benchmark::benchmark
+    benchmark::benchmark_main
+    Microsoft.GSL::GSL
+    WIL::WIL
+)
