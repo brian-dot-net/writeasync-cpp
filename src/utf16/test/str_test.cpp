@@ -17,3 +17,11 @@ TEST(to_utf8_test, basic)
 
     ASSERT_EQ(expected, str::to_utf8(input));
 }
+
+TEST(to_utf8_test, empty)
+{
+    const auto input = std::wstring{};
+    const auto expected = std::string{};
+
+    ASSERT_EQ(expected, str::to_utf8(input));
+}
