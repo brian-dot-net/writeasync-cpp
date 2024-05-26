@@ -8,12 +8,12 @@ namespace wacpp
 class Todo
 {
 public:
-    Todo(const std::string& name);
+    Todo(const std::wstring& name);
 
-    const std::string& name() const noexcept;
+    const std::wstring& name() const noexcept;
 
 private:
-    std::string m_name;
+    std::wstring m_name;
 };
 
 }

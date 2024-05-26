@@ -6,7 +6,7 @@ using namespace wacpp;
 
 TEST(todo_test, name)
 {
-    const auto t = Todo{ "xyz" };
+    const auto t = Todo{ L"xyz" };
 
-    ASSERT_EQ(std::string{ "xyz" }, t.name());
+    ASSERT_EQ(std::wstring{ L"xyz" }, t.name());
 }
