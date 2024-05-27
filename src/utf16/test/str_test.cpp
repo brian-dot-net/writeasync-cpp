@@ -25,3 +25,11 @@ TEST(to_utf8_test, empty)
 
     ASSERT_EQ(expected, str::to_utf8(input));
 }
+
+TEST(to_utf8_test, invalid_input)
+{
+    static constexpr const auto bad = std::array<uint16_t, 2>{0xD800, 0x0000};
+    const auto input = std::wstring{ reinterpret_cast<const wchar_t*>(bad.data()) };
+
+    ASSERT_THROW(str::to_utf8(input), wil::ResultException);
+}
