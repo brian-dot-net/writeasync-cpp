@@ -104,15 +104,19 @@ public:
                 return;
             }
 
-            const auto hr = try_move_next();
-            THROW_IF_FAILED_MSG(hr, "Error near offset %llu while attempting UTF-8 conversion", m_next_offset);
+            if (FAILED(try_move_next<false>()))
+            {
+                const auto hr = try_move_next<true>();
+                THROW_IF_FAILED_MSG(hr, "Error near offset %llu while attempting UTF-8 conversion", m_next_offset);
+            }
 
             m_index = 0;
         }
 
+        template <bool OneMore>
         HRESULT try_move_next()
         {
-            const auto input_block = next_block();
+            const auto input_block = next_block<OneMore>();
             const auto input_size = gsl::narrow<int>(input_block.size());
             static constexpr const auto output_size = gsl::narrow<int>(N);
             const auto actual_size = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, input_block.data(), input_size, m_block.data(), output_size, nullptr, nullptr);
@@ -126,9 +130,10 @@ public:
             return S_OK;
         }
 
+        template <bool OneMore>
         auto next_block() const
         {
-            static constexpr const auto M = (N / 4);
+            static constexpr const auto M = (N / 4) + (OneMore ? 1 : 0);
             const auto max_input_size = m_source.size() - m_next_offset;
             const auto input_size = (M <= max_input_size) ? M : max_input_size;
             return m_source.substr(m_next_offset, input_size);

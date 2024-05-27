@@ -99,3 +99,15 @@ TEST(to_utf8_test, emoji)
 
     ASSERT_EQ(expected, str::to_utf8(input));
 }
+
+TEST(to_utf8_test, emoji_block)
+{
+    const auto raw = std::array<uint16_t, 5>{0xD83D, 0xDE0E, 0xD83D, 0xDC4D, 0x0000};
+    const auto input = std::wstring{ reinterpret_cast<const wchar_t*>(raw.data()) };
+    const auto expected = std::string{ "\xF0\x9F\x98\x8E\xF0\x9F\x91\x8D" };
+
+    test_utf8_block<4>(input, expected);
+    test_utf8_block<9>(input, expected);
+    test_utf8_block<14>(input, expected);
+    test_utf8_block<19>(input, expected);
+}
